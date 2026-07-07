@@ -25,6 +25,13 @@ type CategoryRepository interface {
 	List(ctx context.Context) ([]*model.Category, error)
 }
 
+type TagRepository interface {
+	Create(ctx context.Context, tag *model.Tag) error
+	GetByID(ctx context.Context, id int64) (*model.Tag, error)
+	GetByName(ctx context.Context, name string) (*model.Tag, error)
+	List(ctx context.Context) ([]*model.Tag, error)
+}
+
 type ServiceRepository interface {
 	Create(ctx context.Context, service *model.Service) error
 	GetByID(ctx context.Context, id int64) (*model.Service, error)
