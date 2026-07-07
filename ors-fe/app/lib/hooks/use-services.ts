@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchServices, type ServiceItem, type ServiceQueryParams } from "../api/service-items";
+import { fetchServices, type ServiceItem, type ServiceQueryParams } from "../api/services";
 
 const MOCK_SERVICES: ServiceItem[] = [
   {
@@ -9,8 +9,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 199,
     duration_minutes: 60,
     avg_rating: 4.5,
+    review_count: 128,
+    status: "active",
+    image_url: "",
     provider: { id: 1, business_name: "舒心养生馆" },
     category: { id: 1, name: "按摩" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
   {
     id: 2,
@@ -19,8 +24,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 298,
     duration_minutes: 90,
     avg_rating: 4.8,
+    review_count: 256,
+    status: "active",
+    image_url: "",
     provider: { id: 2, business_name: "美颜坊" },
     category: { id: 2, name: "美容" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
   {
     id: 3,
@@ -29,8 +39,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 399,
     duration_minutes: 60,
     avg_rating: 4.3,
+    review_count: 64,
+    status: "pending",
+    image_url: "",
     provider: { id: 3, business_name: "FitZone 健身" },
     category: { id: 3, name: "健身" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
   {
     id: 4,
@@ -39,8 +54,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 258,
     duration_minutes: 75,
     avg_rating: 4.6,
+    review_count: 89,
+    status: "rejected",
+    image_url: "",
     provider: { id: 1, business_name: "舒心养生馆" },
     category: { id: 1, name: "按摩" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
   {
     id: 5,
@@ -49,8 +69,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 599,
     duration_minutes: 120,
     avg_rating: 4.7,
+    review_count: 192,
+    status: "inactive",
+    image_url: "",
     provider: { id: 2, business_name: "美颜坊" },
     category: { id: 2, name: "美容" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
   {
     id: 6,
@@ -59,8 +84,13 @@ const MOCK_SERVICES: ServiceItem[] = [
     price: 329,
     duration_minutes: 90,
     avg_rating: 4.9,
+    review_count: 312,
+    status: "active",
+    image_url: "",
     provider: { id: 3, business_name: "FitZone 健身" },
     category: { id: 3, name: "健身" },
+    created_at: "2026-07-07T09:00:00Z",
+    updated_at: "2026-07-07T09:00:00Z",
   },
 ];
 

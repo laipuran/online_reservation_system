@@ -1,5 +1,7 @@
 import { request } from "./client";
 
+export type ServiceStatus = "active" | "inactive" | "pending" | "rejected";
+
 export interface ServiceProvider {
   id: number;
   business_name: string;
@@ -17,8 +19,13 @@ export interface ServiceItem {
   price: number;
   duration_minutes: number;
   avg_rating: number;
+  review_count: number;
+  status: ServiceStatus;
+  image_url: string;
   provider: ServiceProvider;
   category: ServiceCategory;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ServiceListResponse {
