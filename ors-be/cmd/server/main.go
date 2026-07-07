@@ -36,12 +36,25 @@ func main() {
 
 	userRepo := postgres.NewUserRepo(pool)
 	providerRepo := postgres.NewServiceProviderRepo(pool)
+	serviceRepo := postgres.NewServiceRepo(pool)
+	tagRepo := postgres.NewTagRepo(pool)
+	serviceTagRepo := postgres.NewServiceTagRepo(pool)
+	categoryRepo := postgres.NewCategoryRepo(pool)
+	interestRepo := postgres.NewUserInterestRepo(pool)
 	authSvc := service.NewAuthService(userRepo, hasher, tokenGen)
 	providerSvc := service.NewServiceProviderService(providerRepo)
+	serviceSvc := service.NewServiceService(serviceRepo, providerRepo, tagRepo, serviceTagRepo)
+	tagSvc := service.NewTagService(tagRepo)
+	categorySvc := service.NewCategoryService(categoryRepo)
+	interestSvc := service.NewUserInterestService(tagRepo, interestRepo)
 	authH := handler.NewAuthHandler(authSvc)
 	providerH := handler.NewServiceProviderHandler(providerSvc)
+	serviceH := handler.NewServiceHandler(serviceSvc)
+	tagH := handler.NewTagHandler(tagSvc)
+	categoryH := handler.NewCategoryHandler(categorySvc)
+	interestH := handler.NewUserInterestHandler(interestSvc)
 
-	srv := httpsrv.NewServer(authH, providerH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, interestH, categoryH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

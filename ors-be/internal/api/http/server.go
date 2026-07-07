@@ -15,6 +15,10 @@ import (
 func NewServer(
 	authH *handler.AuthHandler,
 	providerH *handler.ServiceProviderHandler,
+	serviceH *handler.ServiceHandler,
+	tagH *handler.TagHandler,
+	categoryH *handler.CategoryHandler,
+	interestH *handler.UserInterestHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -37,15 +41,30 @@ func NewServer(
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
+		r.Get("/categories", categoryH.List())
 		r.Get("/providers/{id}", providerH.GetByID())
+		r.Get("/providers/{id}/services", serviceH.ListByProvider())
+		r.Get("/services", serviceH.List())
+		r.Get("/services/{id}", serviceH.GetByID())
+		r.Get("/services/{id}/tags", serviceH.ListTags())
+		r.Get("/tags", tagH.List())
+		r.Get("/tags/{id}", tagH.GetByID())
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
+			r.Get("/users/me/interests", interestH.ListMine())
+			r.Put("/users/me/interests", interestH.ReplaceMine())
+
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("provider"))
+				r.Post("/tags", tagH.Create())
 				r.Post("/providers/me", providerH.CreateMine())
 				r.Get("/providers/me", providerH.GetMine())
 				r.Put("/providers/me", providerH.UpdateMine())
+				r.Post("/services", serviceH.Create())
+				r.Put("/services/{id}", serviceH.Update())
+				r.Patch("/services/{id}/status", serviceH.UpdateStatus())
+				r.Put("/services/{id}/tags", serviceH.ReplaceTags())
 			})
 		})
 	})
