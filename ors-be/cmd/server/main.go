@@ -1,0 +1,71 @@
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	httpsrv "ors-be/internal/api/http"
+	"ors-be/internal/api/http/handler"
+	"ors-be/internal/auth"
+	"ors-be/internal/config"
+	"ors-be/internal/repository/postgres"
+	"ors-be/internal/service"
+)
+
+func main() {
+	cfg := config.Load()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	pool, err := postgres.Connect(ctx, cfg.DatabaseURL)
+	if err != nil {
+		log.Fatalf("连接数据库失败: %v", err)
+	}
+	defer pool.Close()
+	log.Println("数据库连接成功")
+
+	hasher := auth.NewHasher()
+	tokenGen := auth.NewTokenGenerator(cfg.JWTSecret, cfg.JWTExpirationHours)
+
+	userRepo := postgres.NewUserRepo(pool)
+	authSvc := service.NewAuthService(userRepo, hasher, tokenGen)
+	authH := handler.NewAuthHandler(authSvc)
+
+	srv := httpsrv.NewServer(authH, tokenGen, cfg.AllowedOrigins)
+
+	httpServer := &http.Server{
+		Addr:         ":" + cfg.HTTPPort,
+		Handler:      srv,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	go func() {
+		addr := fmt.Sprintf(":%s", cfg.HTTPPort)
+		log.Printf("服务启动，监听 %s", addr)
+		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("服务启动失败: %v", err)
+		}
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("正在关闭服务...")
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer shutdownCancel()
+
+	if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		log.Fatalf("服务关闭异常: %v", err)
+	}
+	log.Println("服务已关闭")
+}
