@@ -56,7 +56,7 @@ curl -s http://localhost:8080/api/v1/providers/1
 
 ### 认证
 
-需要 JWT Bearer Token。
+需要 JWT Bearer Token，且当前用户角色必须为 `provider`。
 
 ### 请求
 
@@ -106,6 +106,7 @@ curl -s http://localhost:8080/api/v1/providers/1
 | 场景 | HTTP 状态码 | message |
 |------|-------------|---------|
 | 未登录或 Token 无效 | 401 | 缺少认证信息 / Token 无效或已过期 |
+| 当前用户不是服务提供者 | 403 | 权限不足 |
 | 请求体非法 | 400 | 无效的请求体 |
 | 商家名称为空 | 400 | 商家名称不能为空 |
 | 当前用户已有服务提供者资料 | 409 | 服务提供者资料已存在 |
@@ -127,7 +128,7 @@ curl -s http://localhost:8080/api/v1/providers/me \
 
 ### 认证
 
-需要 JWT Bearer Token。
+需要 JWT Bearer Token，且当前用户角色必须为 `provider`。
 
 ### 成功响应 (200)
 
@@ -155,6 +156,7 @@ curl -s http://localhost:8080/api/v1/providers/me \
 | 场景 | HTTP 状态码 | message |
 |------|-------------|---------|
 | 未登录或 Token 无效 | 401 | 缺少认证信息 / Token 无效或已过期 |
+| 当前用户不是服务提供者 | 403 | 权限不足 |
 | 当前用户没有服务提供者资料 | 404 | 服务提供者不存在 |
 
 ### 示例
@@ -172,7 +174,7 @@ curl -s http://localhost:8080/api/v1/providers/me \
 
 ### 认证
 
-需要 JWT Bearer Token。
+需要 JWT Bearer Token，且当前用户角色必须为 `provider`。
 
 ### 请求
 
@@ -222,6 +224,7 @@ curl -s http://localhost:8080/api/v1/providers/me \
 | 场景 | HTTP 状态码 | message |
 |------|-------------|---------|
 | 未登录或 Token 无效 | 401 | 缺少认证信息 / Token 无效或已过期 |
+| 当前用户不是服务提供者 | 403 | 权限不足 |
 | 请求体非法 | 400 | 无效的请求体 |
 | 商家名称为空 | 400 | 商家名称不能为空 |
 | 当前用户没有服务提供者资料 | 404 | 服务提供者不存在 |

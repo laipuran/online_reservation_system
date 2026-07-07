@@ -41,9 +41,12 @@ func NewServer(
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
-			r.Post("/providers/me", providerH.CreateMine())
-			r.Get("/providers/me", providerH.GetMine())
-			r.Put("/providers/me", providerH.UpdateMine())
+			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireRole("provider"))
+				r.Post("/providers/me", providerH.CreateMine())
+				r.Get("/providers/me", providerH.GetMine())
+				r.Put("/providers/me", providerH.UpdateMine())
+			})
 		})
 	})
 

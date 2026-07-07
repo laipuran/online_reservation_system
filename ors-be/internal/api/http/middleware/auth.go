@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"strings"
 
-	"ors-be/internal/auth"
 	"ors-be/internal/api/http/response"
+	"ors-be/internal/auth"
 )
 
 type contextKey string
@@ -43,4 +43,22 @@ func Auth(tokenGen auth.TokenGenerator) func(http.Handler) http.Handler {
 func GetClaims(ctx context.Context) *auth.Claims {
 	claims, _ := ctx.Value(UserCtxKey).(*auth.Claims)
 	return claims
+}
+
+func RequireRole(role string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			claims := GetClaims(r.Context())
+			if claims == nil {
+				response.JSON(w, http.StatusUnauthorized, response.Unauthorized("缺少认证信息"))
+				return
+			}
+			if claims.Role != role {
+				response.JSON(w, http.StatusForbidden, response.Forbidden("权限不足"))
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
 }
