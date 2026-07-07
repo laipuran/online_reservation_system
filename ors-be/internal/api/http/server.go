@@ -17,6 +17,7 @@ func NewServer(
 	providerH *handler.ServiceProviderHandler,
 	serviceH *handler.ServiceHandler,
 	tagH *handler.TagHandler,
+	interestH *handler.UserInterestHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -49,6 +50,9 @@ func NewServer(
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
+			r.Get("/users/me/interests", interestH.ListMine())
+			r.Put("/users/me/interests", interestH.ReplaceMine())
+
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("provider"))
 				r.Post("/tags", tagH.Create())

@@ -1255,6 +1255,7 @@ erDiagram
 #### POST /api/v1/auth/register
 
 Request:
+
 ```json
 {
   "name": "张三",
@@ -1265,6 +1266,7 @@ Request:
 ```
 
 Response (201):
+
 ```json
 {
   "code": 201,
@@ -1285,6 +1287,7 @@ Response (201):
 #### POST /api/v1/auth/login
 
 Request:
+
 ```json
 {
   "email": "zhangsan@example.com",
@@ -1293,6 +1296,7 @@ Request:
 ```
 
 Response (200):
+
 ```json
 {
   "code": 200,
@@ -1350,6 +1354,7 @@ Query Parameters:
 | page_size | int | 否 | 每页数量，默认 20，最大 50 |
 
 Response (200):
+
 ```json
 {
   "code": 200,
@@ -1395,6 +1400,7 @@ Response (200):
 #### POST /api/v1/reservations
 
 Request:
+
 ```json
 {
   "service_id": 1,
@@ -1404,6 +1410,7 @@ Request:
 ```
 
 Response (201):
+
 ```json
 {
   "code": 201,
@@ -1444,6 +1451,7 @@ Query Parameters:
 #### POST /api/v1/reviews
 
 Request:
+
 ```json
 {
   "reservation_id": 1001,
@@ -1453,6 +1461,7 @@ Request:
 ```
 
 Response (201):
+
 ```json
 {
   "code": 201,
