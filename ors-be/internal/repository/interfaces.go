@@ -17,9 +17,19 @@ type ServiceProviderRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.ServiceProvider, error)
 	GetByUserID(ctx context.Context, userID int64) (*model.ServiceProvider, error)
 	Update(ctx context.Context, provider *model.ServiceProvider) error
-  
+}
+
 type CategoryRepository interface {
 	Create(ctx context.Context, category *model.Category) error
 	GetByID(ctx context.Context, id int64) (*model.Category, error)
 	List(ctx context.Context) ([]*model.Category, error)
+}
+
+type ServiceRepository interface {
+	Create(ctx context.Context, service *model.Service) error
+	GetByID(ctx context.Context, id int64) (*model.Service, error)
+	GetViewByID(ctx context.Context, id int64) (*model.ServiceView, error)
+	List(ctx context.Context, filter model.ServiceFilter) ([]*model.ServiceView, int, error)
+	Update(ctx context.Context, service *model.Service) error
+	UpdateStatus(ctx context.Context, id int64, status string) error
 }

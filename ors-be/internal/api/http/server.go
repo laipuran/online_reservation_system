@@ -15,6 +15,7 @@ import (
 func NewServer(
 	authH *handler.AuthHandler,
 	providerH *handler.ServiceProviderHandler,
+	serviceH *handler.ServiceHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -38,6 +39,9 @@ func NewServer(
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
 		r.Get("/providers/{id}", providerH.GetByID())
+		r.Get("/providers/{id}/services", serviceH.ListByProvider())
+		r.Get("/services", serviceH.List())
+		r.Get("/services/{id}", serviceH.GetByID())
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
@@ -46,6 +50,9 @@ func NewServer(
 				r.Post("/providers/me", providerH.CreateMine())
 				r.Get("/providers/me", providerH.GetMine())
 				r.Put("/providers/me", providerH.UpdateMine())
+				r.Post("/services", serviceH.Create())
+				r.Put("/services/{id}", serviceH.Update())
+				r.Patch("/services/{id}/status", serviceH.UpdateStatus())
 			})
 		})
 	})
