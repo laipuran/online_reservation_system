@@ -37,6 +37,11 @@ type ServiceTagRepository interface {
 	ListByServiceID(ctx context.Context, serviceID int64) ([]*model.Tag, error)
 }
 
+type UserInterestRepository interface {
+	ReplaceByUserID(ctx context.Context, userID int64, tagIDs []int64) error
+	ListByUserID(ctx context.Context, userID int64) ([]*model.Tag, error)
+}
+
 type ServiceRepository interface {
 	Create(ctx context.Context, service *model.Service) error
 	GetByID(ctx context.Context, id int64) (*model.Service, error)
