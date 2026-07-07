@@ -320,6 +320,7 @@ func main() {
 - 使用原始 SQL，`up`/`down` 成对
 - 文件名格式：`<序号>_<描述>.up.sql`
 - 示例：`001_create_users.up.sql` / `001_create_users.down.sql`
+- 业务表迁移序号跟随 PRD 表编号：PRD `3.6.x` 表使用三位前缀 `00x` / `0xx`，例如 `3.6.1 users -> 001_create_users`、`3.6.2 service_providers -> 002_create_service_providers`、`3.6.3 categories -> 003_create_categories`
 - 通过 Makefile 的 `make migrate-up` / `make migrate-down` 执行
 - 迁移工具：`golang-migrate/migrate`
 
