@@ -5,8 +5,13 @@
 | 工具 | 版本 | 说明 |
 |------|------|------|
 | Go | 1.24+ | `go version` |
-| PostgreSQL | 16+ | `psql --version` |
-| migrate CLI | latest | `migrate -version` |
+| PostgreSQL（这是我们使用的数据库） | 16+ | `psql --version` |
+| migrate CLI（这是我们用来维护数据库表结构的工具，意思就是在运行软件的时候不再需要手敲 SQL 建表，节省精力，降低容错） | latest | `migrate -version` |
+| Node.js | 22+ | `node --version` |
+| npm | 11+ | `npm --version` |
+
+还有一些在这里使用到的工具，在此提供说明：
+- turbo: 因为前端跑 npm run dev 和 后端跑 make run 都需要 cd 到对应的目录进行操作，不仅麻烦，有时候也意识不到自己错哪里了，所以在此引入 turbo，其功能很简单，就是在项目的根目录就能快速执行各个分 repo 的指令。
 
 ### 安装 migrate CLI
 
@@ -18,7 +23,7 @@ go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@lat
 
 ---
 
-## 环境配置
+## 环境配置（这一段可以先忽略）
 
 参考 `internal/config/config.go`，全部通过环境变量配置：
 
@@ -84,11 +89,26 @@ psql "$DATABASE_URL" -c "\dt"
 
 ### 3. 启动服务
 
+**方式一：仅启动后端**
 ```bash
 make run
 ```
 
-看到输出 `服务启动，监听 :8080` 即成功。
+**方式二：启动前后端（推荐开发用）**
+```bash
+npm run dev
+```
+
+Turbo 会同时拉起后端（`make run`）和前端开发服务器（`react-router dev`）。
+
+看到输出如下即成功：
+
+```
+ors-be:dev: 服务启动，监听 :8080
+ors-fe:dev: ➜  Local:   http://localhost:5173/
+```
+
+> 如果报 `command not found: turbo`，在项目根目录执行 `npm install`。
 
 ### 完整一键启动（Docker + 迁移 + 服务）
 
@@ -137,6 +157,40 @@ ors-be/
 ├── migrations/                     # SQL 迁移
 ├── Makefile
 └── go.mod
+```
+
+---
+
+## Turbo 命令
+
+项目使用 Turborepo 编排前后端。所有命令在项目根目录执行：
+
+| 命令 | 说明 |
+|------|------|
+| `npm run dev` | 并行启动前后端开发模式 |
+| `npm run build` | 构建所有 workspace |
+| `npm run lint` | 对所有 workspace 执行 lint |
+| `npm run test` | 对所有 workspace 执行测试 |
+| `npm run typecheck` | 对前端执行类型检查 |
+| `npm run clean` | 清理所有 workspace 的构建产物 |
+
+启动后 Turbo 会监听文件变化，修改代码时自动重新编译/热更新。
+
+### 单独启动某个 workspace
+
+```bash
+npm run dev -w ors-fe    # 仅启动前端
+npm run dev -w ors-be    # 仅启动后端
+```
+
+### 安装依赖
+
+始终从项目根目录安装：
+
+```bash
+npm install                      # 安装全部依赖
+npm install <pkg> -w ors-fe      # 为前端安装依赖
+npm install <pkg> -w ors-be      # 为后端安装依赖
 ```
 
 ---
