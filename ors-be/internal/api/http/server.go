@@ -14,6 +14,7 @@ import (
 
 func NewServer(
 	authH *handler.AuthHandler,
+	providerH *handler.ServiceProviderHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -36,10 +37,13 @@ func NewServer(
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
+		r.Get("/providers/{id}", providerH.GetByID())
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
-			// 后续需要认证的路由在此添加
+			r.Post("/providers/me", providerH.CreateMine())
+			r.Get("/providers/me", providerH.GetMine())
+			r.Put("/providers/me", providerH.UpdateMine())
 		})
 	})
 
