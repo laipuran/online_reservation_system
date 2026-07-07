@@ -1,0 +1,11 @@
+{
+  "name": "ors-be",
+  "private": true,
+  "scripts": {
+    "build": "make build",
+    "dev": "make run",
+    "lint": "go vet ./...",
+    "test": "go test ./...",
+    "clean": "make clean"
+  }
+}
