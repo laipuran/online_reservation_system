@@ -17,6 +17,7 @@ func NewServer(
 	providerH *handler.ServiceProviderHandler,
 	serviceH *handler.ServiceHandler,
 	tagH *handler.TagHandler,
+	categoryH *handler.CategoryHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -39,6 +40,7 @@ func NewServer(
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
+		r.Get("/categories", categoryH.List())
 		r.Get("/providers/{id}", providerH.GetByID())
 		r.Get("/providers/{id}/services", serviceH.ListByProvider())
 		r.Get("/services", serviceH.List())

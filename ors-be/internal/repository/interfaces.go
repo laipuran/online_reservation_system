@@ -45,3 +45,31 @@ type ServiceRepository interface {
 	Update(ctx context.Context, service *model.Service) error
 	UpdateStatus(ctx context.Context, id int64, status string) error
 }
+
+type ReservationRepository interface {
+	Create(ctx context.Context, reservation *model.Reservation) error
+	GetByID(ctx context.Context, id int64) (*model.Reservation, error)
+	GetByIDForUser(ctx context.Context, id, userID int64) (*model.Reservation, error)
+	GetByIDForProvider(ctx context.Context, id, providerID int64) (*model.Reservation, error)
+	ListByUserID(ctx context.Context, userID int64, status string, limit, offset int) ([]*model.Reservation, error)
+	ListByProviderID(ctx context.Context, providerID int64, status string, limit, offset int) ([]*model.Reservation, error)
+	UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error)
+}
+
+type ReviewRepository interface {
+	Create(ctx context.Context, review *model.Review) error
+	GetByID(ctx context.Context, id int64) (*model.Review, error)
+	GetByReservationID(ctx context.Context, reservationID int64) (*model.Review, error)
+	ListByServiceID(ctx context.Context, serviceID int64, limit, offset int) ([]*model.Review, error)
+	ListByUserID(ctx context.Context, userID int64, limit, offset int) ([]*model.Review, error)
+	ListByProviderID(ctx context.Context, providerID int64, limit, offset int) ([]*model.Review, error)
+}
+
+type NotificationRepository interface {
+	Create(ctx context.Context, notification *model.Notification) error
+	GetByID(ctx context.Context, id int64) (*model.Notification, error)
+	ListByUserID(ctx context.Context, userID int64, isRead *bool, limit, offset int) ([]*model.Notification, error)
+	CountUnread(ctx context.Context, userID int64) (int64, error)
+	MarkRead(ctx context.Context, id, userID int64) (*model.Notification, error)
+	MarkAllRead(ctx context.Context, userID int64) (int64, error)
+}
