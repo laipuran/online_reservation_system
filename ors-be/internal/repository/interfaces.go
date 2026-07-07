@@ -17,4 +17,9 @@ type ServiceProviderRepository interface {
 	GetByID(ctx context.Context, id int64) (*model.ServiceProvider, error)
 	GetByUserID(ctx context.Context, userID int64) (*model.ServiceProvider, error)
 	Update(ctx context.Context, provider *model.ServiceProvider) error
+  
+type CategoryRepository interface {
+	Create(ctx context.Context, category *model.Category) error
+	GetByID(ctx context.Context, id int64) (*model.Category, error)
+	List(ctx context.Context) ([]*model.Category, error)
 }
