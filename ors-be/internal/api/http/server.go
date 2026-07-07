@@ -43,6 +43,7 @@ func NewServer(
 		r.Get("/providers/{id}/services", serviceH.ListByProvider())
 		r.Get("/services", serviceH.List())
 		r.Get("/services/{id}", serviceH.GetByID())
+		r.Get("/services/{id}/tags", serviceH.ListTags())
 		r.Get("/tags", tagH.List())
 		r.Get("/tags/{id}", tagH.GetByID())
 
@@ -57,6 +58,7 @@ func NewServer(
 				r.Post("/services", serviceH.Create())
 				r.Put("/services/{id}", serviceH.Update())
 				r.Patch("/services/{id}/status", serviceH.UpdateStatus())
+				r.Put("/services/{id}/tags", serviceH.ReplaceTags())
 			})
 		})
 	})

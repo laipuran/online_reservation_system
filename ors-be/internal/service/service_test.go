@@ -14,11 +14,19 @@ type mockServiceRepo struct {
 	nextID   int64
 }
 
+type mockServiceTagRepo struct {
+	tagsByService map[int64][]*model.Tag
+}
+
 func newMockServiceRepo() *mockServiceRepo {
 	return &mockServiceRepo{
 		services: make(map[int64]*model.Service),
 		nextID:   1,
 	}
+}
+
+func newMockServiceTagRepo() *mockServiceTagRepo {
+	return &mockServiceTagRepo{tagsByService: make(map[int64][]*model.Tag)}
 }
 
 func (m *mockServiceRepo) Create(ctx context.Context, service *model.Service) error {
@@ -81,13 +89,33 @@ func (m *mockServiceRepo) UpdateStatus(ctx context.Context, id int64, status str
 	return nil
 }
 
+func (m *mockServiceTagRepo) ReplaceByServiceID(ctx context.Context, serviceID int64, tagIDs []int64) error {
+	tags := make([]*model.Tag, 0, len(tagIDs))
+	for _, tagID := range tagIDs {
+		tags = append(tags, &model.Tag{ID: tagID, Name: "标签"})
+	}
+	m.tagsByService[serviceID] = tags
+	return nil
+}
+
+func (m *mockServiceTagRepo) ListByServiceID(ctx context.Context, serviceID int64) ([]*model.Tag, error) {
+	tags := make([]*model.Tag, 0, len(m.tagsByService[serviceID]))
+	for _, tag := range m.tagsByService[serviceID] {
+		tags = append(tags, cloneTag(tag))
+	}
+	return tags, nil
+}
+
 func newTestBusinessService() ServiceService {
 	providerRepo := newMockServiceProviderRepo()
 	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{
 		UserID:       1,
 		BusinessName: "舒心养生馆",
 	})
-	return NewServiceService(newMockServiceRepo(), providerRepo)
+	tagRepo := newMockTagRepo()
+	_ = tagRepo.Create(context.Background(), &model.Tag{Name: "放松"})
+	_ = tagRepo.Create(context.Background(), &model.Tag{Name: "塑形"})
+	return NewServiceService(newMockServiceRepo(), providerRepo, tagRepo, newMockServiceTagRepo())
 }
 
 func TestServiceService_Create_Success(t *testing.T) {
@@ -161,7 +189,7 @@ func TestServiceService_Update_ForbidsOtherProvider(t *testing.T) {
 	providerRepo := newMockServiceProviderRepo()
 	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{UserID: 1, BusinessName: "商家A"})
 	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{UserID: 2, BusinessName: "商家B"})
-	svc := NewServiceService(serviceRepo, providerRepo)
+	svc := NewServiceService(serviceRepo, providerRepo, newMockTagRepo(), newMockServiceTagRepo())
 
 	created, err := svc.Create(context.Background(), 1, ServiceInput{
 		CategoryID:      1,
@@ -203,6 +231,80 @@ func TestServiceService_UpdateStatus_Success(t *testing.T) {
 	}
 	if updated.Status != "inactive" {
 		t.Errorf("UpdateStatus() status = %q, want inactive", updated.Status)
+	}
+}
+
+func TestServiceService_ReplaceTags_Success(t *testing.T) {
+	svc := newTestBusinessService()
+
+	created, err := svc.Create(context.Background(), 1, ServiceInput{
+		CategoryID:      1,
+		Title:           "服务",
+		Price:           1,
+		DurationMinutes: 1,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	tags, err := svc.ReplaceTags(context.Background(), 1, created.ID, ServiceTagsInput{TagIDs: []int64{1, 2, 1}})
+	if err != nil {
+		t.Fatalf("ReplaceTags() error = %v", err)
+	}
+	if len(tags) != 2 {
+		t.Fatalf("ReplaceTags() len = %d, want 2", len(tags))
+	}
+
+	listed, err := svc.ListTags(context.Background(), created.ID)
+	if err != nil {
+		t.Fatalf("ListTags() error = %v", err)
+	}
+	if len(listed) != 2 {
+		t.Errorf("ListTags() len = %d, want 2", len(listed))
+	}
+}
+
+func TestServiceService_ReplaceTags_InvalidTag(t *testing.T) {
+	svc := newTestBusinessService()
+
+	created, err := svc.Create(context.Background(), 1, ServiceInput{
+		CategoryID:      1,
+		Title:           "服务",
+		Price:           1,
+		DurationMinutes: 1,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	_, err = svc.ReplaceTags(context.Background(), 1, created.ID, ServiceTagsInput{TagIDs: []int64{99}})
+	if !errors.Is(err, ErrTagNotFound) {
+		t.Errorf("ReplaceTags() error = %v, want %v", err, ErrTagNotFound)
+	}
+}
+
+func TestServiceService_ReplaceTags_ForbidsOtherProvider(t *testing.T) {
+	serviceRepo := newMockServiceRepo()
+	providerRepo := newMockServiceProviderRepo()
+	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{UserID: 1, BusinessName: "商家A"})
+	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{UserID: 2, BusinessName: "商家B"})
+	tagRepo := newMockTagRepo()
+	_ = tagRepo.Create(context.Background(), &model.Tag{Name: "放松"})
+	svc := NewServiceService(serviceRepo, providerRepo, tagRepo, newMockServiceTagRepo())
+
+	created, err := svc.Create(context.Background(), 1, ServiceInput{
+		CategoryID:      1,
+		Title:           "服务",
+		Price:           1,
+		DurationMinutes: 1,
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	_, err = svc.ReplaceTags(context.Background(), 2, created.ID, ServiceTagsInput{TagIDs: []int64{1}})
+	if !errors.Is(err, ErrServiceForbidden) {
+		t.Errorf("ReplaceTags() error = %v, want %v", err, ErrServiceForbidden)
 	}
 }
 

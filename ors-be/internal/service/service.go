@@ -17,6 +17,7 @@ var (
 	ErrServiceInvalidDuration = errors.New("服务时长必须大于0")
 	ErrServiceInvalidStatus   = errors.New("服务状态不正确")
 	ErrServiceForbidden       = errors.New("无权操作该服务")
+	ErrServiceInvalidTag      = errors.New("标签ID不正确")
 )
 
 type ServiceInput struct {
@@ -32,6 +33,10 @@ type ServiceStatusInput struct {
 	Status string `json:"status"`
 }
 
+type ServiceTagsInput struct {
+	TagIDs []int64 `json:"tag_ids"`
+}
+
 type ServiceListResult struct {
 	Items    []*model.ServiceView `json:"items"`
 	Total    int                  `json:"total"`
@@ -45,17 +50,28 @@ type ServiceService interface {
 	List(ctx context.Context, filter model.ServiceFilter) (*ServiceListResult, error)
 	Update(ctx context.Context, userID, id int64, input ServiceInput) (*model.ServiceView, error)
 	UpdateStatus(ctx context.Context, userID, id int64, status string) (*model.ServiceView, error)
+	ListTags(ctx context.Context, id int64) ([]*model.Tag, error)
+	ReplaceTags(ctx context.Context, userID, id int64, input ServiceTagsInput) ([]*model.Tag, error)
 }
 
 type serviceService struct {
-	serviceRepo  repository.ServiceRepository
-	providerRepo repository.ServiceProviderRepository
+	serviceRepo    repository.ServiceRepository
+	providerRepo   repository.ServiceProviderRepository
+	tagRepo        repository.TagRepository
+	serviceTagRepo repository.ServiceTagRepository
 }
 
-func NewServiceService(serviceRepo repository.ServiceRepository, providerRepo repository.ServiceProviderRepository) ServiceService {
+func NewServiceService(
+	serviceRepo repository.ServiceRepository,
+	providerRepo repository.ServiceProviderRepository,
+	tagRepo repository.TagRepository,
+	serviceTagRepo repository.ServiceTagRepository,
+) ServiceService {
 	return &serviceService{
-		serviceRepo:  serviceRepo,
-		providerRepo: providerRepo,
+		serviceRepo:    serviceRepo,
+		providerRepo:   providerRepo,
+		tagRepo:        tagRepo,
+		serviceTagRepo: serviceTagRepo,
 	}
 }
 
@@ -146,6 +162,33 @@ func (s *serviceService) UpdateStatus(ctx context.Context, userID, id int64, sta
 	return s.GetByID(ctx, id)
 }
 
+func (s *serviceService) ListTags(ctx context.Context, id int64) ([]*model.Tag, error) {
+	existing, err := s.serviceRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, ErrServiceNotFound
+	}
+	return s.serviceTagRepo.ListByServiceID(ctx, id)
+}
+
+func (s *serviceService) ReplaceTags(ctx context.Context, userID, id int64, input ServiceTagsInput) ([]*model.Tag, error) {
+	if _, err := s.authorizeServiceOwner(ctx, userID, id); err != nil {
+		return nil, err
+	}
+
+	tagIDs, err := s.normalizeTagIDs(ctx, input.TagIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := s.serviceTagRepo.ReplaceByServiceID(ctx, id, tagIDs); err != nil {
+		return nil, err
+	}
+	return s.serviceTagRepo.ListByServiceID(ctx, id)
+}
+
 func (s *serviceService) authorizeServiceOwner(ctx context.Context, userID, serviceID int64) (*model.Service, error) {
 	provider, err := s.providerRepo.GetByUserID(ctx, userID)
 	if err != nil {
@@ -166,6 +209,32 @@ func (s *serviceService) authorizeServiceOwner(ctx context.Context, userID, serv
 		return nil, ErrServiceForbidden
 	}
 	return existing, nil
+}
+
+func (s *serviceService) normalizeTagIDs(ctx context.Context, tagIDs []int64) ([]int64, error) {
+	seen := make(map[int64]struct{}, len(tagIDs))
+	normalized := make([]int64, 0, len(tagIDs))
+
+	for _, tagID := range tagIDs {
+		if tagID <= 0 {
+			return nil, ErrServiceInvalidTag
+		}
+		if _, ok := seen[tagID]; ok {
+			continue
+		}
+
+		tag, err := s.tagRepo.GetByID(ctx, tagID)
+		if err != nil {
+			return nil, err
+		}
+		if tag == nil {
+			return nil, ErrTagNotFound
+		}
+
+		seen[tagID] = struct{}{}
+		normalized = append(normalized, tagID)
+	}
+	return normalized, nil
 }
 
 func normalizeServiceInput(input ServiceInput) (*model.Service, error) {

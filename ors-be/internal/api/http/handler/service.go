@@ -169,6 +169,54 @@ func (h *ServiceHandler) UpdateStatus() http.HandlerFunc {
 	}
 }
 
+func (h *ServiceHandler) ListTags() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := parseIDParam(r, "id", "无效的服务ID")
+		if err != nil {
+			response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
+			return
+		}
+
+		tags, err := h.serviceSvc.ListTags(r.Context(), id)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+
+		response.JSON(w, http.StatusOK, response.OK(tags))
+	}
+}
+
+func (h *ServiceHandler) ReplaceTags() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		claims := middleware.GetClaims(r.Context())
+		if claims == nil {
+			response.JSON(w, http.StatusUnauthorized, response.Unauthorized("缺少认证信息"))
+			return
+		}
+
+		id, err := parseIDParam(r, "id", "无效的服务ID")
+		if err != nil {
+			response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
+			return
+		}
+
+		var req service.ServiceTagsInput
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			response.JSON(w, http.StatusBadRequest, response.Fail("无效的请求体"))
+			return
+		}
+
+		tags, err := h.serviceSvc.ReplaceTags(r.Context(), claims.UserID, id, req)
+		if err != nil {
+			writeServiceError(w, err)
+			return
+		}
+
+		response.JSON(w, http.StatusOK, response.OK(tags))
+	}
+}
+
 func parseServiceFilter(r *http.Request) (model.ServiceFilter, error) {
 	query := r.URL.Query()
 	filter := model.ServiceFilter{
@@ -247,8 +295,11 @@ func writeServiceError(w http.ResponseWriter, err error) {
 		errors.Is(err, service.ErrServiceInvalidPrice),
 		errors.Is(err, service.ErrServiceInvalidDuration),
 		errors.Is(err, service.ErrServiceInvalidStatus),
+		errors.Is(err, service.ErrServiceInvalidTag),
 		errors.Is(err, service.ErrBusinessNameRequired):
 		response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
+	case errors.Is(err, service.ErrTagNotFound):
+		response.JSON(w, http.StatusNotFound, response.NotFound(err.Error()))
 	case errors.Is(err, service.ErrProviderNotFound):
 		response.JSON(w, http.StatusNotFound, response.NotFound(err.Error()))
 	case errors.Is(err, service.ErrServiceNotFound):
