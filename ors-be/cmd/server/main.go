@@ -35,10 +35,13 @@ func main() {
 	tokenGen := auth.NewTokenGenerator(cfg.JWTSecret, cfg.JWTExpirationHours)
 
 	userRepo := postgres.NewUserRepo(pool)
+	providerRepo := postgres.NewServiceProviderRepo(pool)
 	authSvc := service.NewAuthService(userRepo, hasher, tokenGen)
+	providerSvc := service.NewServiceProviderService(providerRepo)
 	authH := handler.NewAuthHandler(authSvc)
+	providerH := handler.NewServiceProviderHandler(providerSvc)
 
-	srv := httpsrv.NewServer(authH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, providerH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

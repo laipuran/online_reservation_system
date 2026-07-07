@@ -14,12 +14,12 @@ import (
 )
 
 type mockAuthService struct {
-	registerFn func(ctx context.Context, email, password, name string) (*service.RegisterResult, error)
+	registerFn func(ctx context.Context, email, password, name, role string) (*service.RegisterResult, error)
 	loginFn    func(ctx context.Context, email, password string) (*service.LoginResult, error)
 }
 
-func (m *mockAuthService) Register(ctx context.Context, email, password, name string) (*service.RegisterResult, error) {
-	return m.registerFn(ctx, email, password, name)
+func (m *mockAuthService) Register(ctx context.Context, email, password, name, role string) (*service.RegisterResult, error) {
+	return m.registerFn(ctx, email, password, name, role)
 }
 
 func (m *mockAuthService) Login(ctx context.Context, email, password string) (*service.LoginResult, error) {
@@ -28,7 +28,7 @@ func (m *mockAuthService) Login(ctx context.Context, email, password string) (*s
 
 func newDefaultMock() *mockAuthService {
 	return &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrInvalidEmail
 		},
 		loginFn: func(_ context.Context, _, _ string) (*service.LoginResult, error) {
@@ -54,7 +54,7 @@ func decodeResponse(t *testing.T, body []byte) *testResponse {
 
 func TestRegister_Success(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, email, password, name string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, email, password, name, role string) (*service.RegisterResult, error) {
 			return &service.RegisterResult{
 				User: &model.User{
 					ID: 1, Name: name, Email: email, Role: "customer",
@@ -90,7 +90,7 @@ func TestRegister_Success(t *testing.T) {
 
 func TestRegister_InvalidJSON(t *testing.T) {
 	h := NewAuthHandler(&mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrInvalidEmail
 		},
 	})
@@ -114,7 +114,7 @@ func TestRegister_InvalidJSON(t *testing.T) {
 
 func TestRegister_InvalidEmail(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrInvalidEmail
 		},
 	}
@@ -139,7 +139,7 @@ func TestRegister_InvalidEmail(t *testing.T) {
 
 func TestRegister_WeakPassword(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrWeakPassword
 		},
 	}
@@ -159,7 +159,7 @@ func TestRegister_WeakPassword(t *testing.T) {
 
 func TestRegister_EmptyName(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrNameRequired
 		},
 	}
@@ -179,7 +179,7 @@ func TestRegister_EmptyName(t *testing.T) {
 
 func TestRegister_EmailAlreadyRegistered(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrEmailAlreadyRegistered
 		},
 	}
@@ -199,7 +199,7 @@ func TestRegister_EmailAlreadyRegistered(t *testing.T) {
 
 func TestRegister_UnexpectedError(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, errors.New("internal server error")
 		},
 	}
@@ -359,9 +359,9 @@ func TestAuthHandler_Login_EmptyBody(t *testing.T) {
 
 func TestAuthHandler_ResponseFormat(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return &service.RegisterResult{
-				User: &model.User{ID: 1, Name: "用户", Email: "test@test.com", Role: "customer"},
+				User:        &model.User{ID: 1, Name: "用户", Email: "test@test.com", Role: "customer"},
 				AccessToken: "token",
 			}, nil
 		},
@@ -393,7 +393,7 @@ func TestAuthHandler_ResponseFormat(t *testing.T) {
 
 func TestAuthHandler_ContentType(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return &service.RegisterResult{
 				User:        &model.User{ID: 1, Name: "用户", Email: "test@test.com", Role: "customer"},
 				AccessToken: "token",
@@ -418,7 +418,7 @@ func TestAuthHandler_ContentType(t *testing.T) {
 // 验证 handler 不使用 response 包以外的 HTTP 状态码
 func TestAuthHandler_StatusCodeCoverage(t *testing.T) {
 	mock := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrInvalidEmail
 		},
 		loginFn: func(_ context.Context, _, _ string) (*service.LoginResult, error) {
@@ -431,7 +431,7 @@ func TestAuthHandler_StatusCodeCoverage(t *testing.T) {
 
 	// Register 201
 	svcOK := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return &service.RegisterResult{
 				User:        &model.User{ID: 1, Name: "u", Email: "a@b.com", Role: "customer"},
 				AccessToken: "t",
@@ -454,7 +454,7 @@ func TestAuthHandler_StatusCodeCoverage(t *testing.T) {
 
 	// Register 409
 	mock409 := &mockAuthService{
-		registerFn: func(_ context.Context, _, _, _ string) (*service.RegisterResult, error) {
+		registerFn: func(_ context.Context, _, _, _, _ string) (*service.RegisterResult, error) {
 			return nil, service.ErrEmailAlreadyRegistered
 		},
 	}

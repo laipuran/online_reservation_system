@@ -21,6 +21,7 @@ type registerRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 	Name     string `json:"name"`
+	Role     string `json:"role"`
 }
 
 func (h *AuthHandler) Register() http.HandlerFunc {
@@ -31,14 +32,15 @@ func (h *AuthHandler) Register() http.HandlerFunc {
 			return
 		}
 
-		result, err := h.authSvc.Register(r.Context(), req.Email, req.Password, req.Name)
+		result, err := h.authSvc.Register(r.Context(), req.Email, req.Password, req.Name, req.Role)
 		if err != nil {
 			switch {
 			case errors.Is(err, service.ErrEmailAlreadyRegistered):
 				response.JSON(w, http.StatusConflict, response.Conflict(err.Error()))
 			case errors.Is(err, service.ErrInvalidEmail),
 				errors.Is(err, service.ErrWeakPassword),
-				errors.Is(err, service.ErrNameRequired):
+				errors.Is(err, service.ErrNameRequired),
+				errors.Is(err, service.ErrInvalidRole):
 				response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
 			default:
 				response.JSON(w, http.StatusInternalServerError, response.ServerError("注册失败"))

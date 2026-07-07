@@ -37,6 +37,14 @@ func Conflict(msg string) Response {
 	return Response{Code: 409, Message: msg, Data: nil}
 }
 
+func Forbidden(msg string) Response {
+	return Response{Code: 403, Message: msg, Data: nil}
+}
+
+func NotFound(msg string) Response {
+	return Response{Code: 404, Message: msg, Data: nil}
+}
+
 func ServerError(msg string) Response {
 	return Response{Code: 500, Message: msg, Data: nil}
 }
