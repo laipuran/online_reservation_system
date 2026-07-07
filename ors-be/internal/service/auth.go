@@ -107,8 +107,6 @@ func normalizeRole(role string) string {
 		return "customer"
 	case "provider":
 		return "provider"
-	case "admin":
-		return "admin"
 	default:
 		return ""
 	}

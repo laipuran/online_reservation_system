@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
     email         VARCHAR(255) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
     role          VARCHAR(20)  NOT NULL DEFAULT 'customer'
-                              CHECK (role IN ('customer', 'provider', 'admin')),
+                              CHECK (role IN ('customer', 'provider')),
     phone         VARCHAR(20),
     avatar_url    VARCHAR(500),
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),

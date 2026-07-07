@@ -20,7 +20,7 @@
 | email | string | 是 | 邮箱，自动转小写，唯一约束 |
 | password | string | 是 | 密码，长度至少 8 位 |
 | name | string | 是 | 昵称 |
-| role | string | 否 | 用户角色，支持 `customer` / `provider` / `admin`，默认 `customer` |
+| role | string | 否 | 用户角色，支持 `customer` / `provider`，默认 `customer` |
 
 ### 成功响应 (201)
 
