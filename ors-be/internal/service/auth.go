@@ -17,6 +17,7 @@ var (
 	ErrInvalidEmail           = errors.New("邮箱格式不正确")
 	ErrWeakPassword           = errors.New("密码长度至少8位")
 	ErrNameRequired           = errors.New("昵称不能为空")
+	ErrInvalidRole            = errors.New("用户角色不正确")
 )
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
@@ -32,7 +33,7 @@ type LoginResult struct {
 }
 
 type AuthService interface {
-	Register(ctx context.Context, email, password, name string) (*RegisterResult, error)
+	Register(ctx context.Context, email, password, name, role string) (*RegisterResult, error)
 	Login(ctx context.Context, email, password string) (*LoginResult, error)
 }
 
@@ -50,9 +51,10 @@ func NewAuthService(userRepo repository.UserRepository, hasher auth.Hasher, toke
 	}
 }
 
-func (s *authService) Register(ctx context.Context, email, password, name string) (*RegisterResult, error) {
+func (s *authService) Register(ctx context.Context, email, password, name, role string) (*RegisterResult, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	name = strings.TrimSpace(name)
+	role = normalizeRole(role)
 
 	if email == "" || !emailRegex.MatchString(email) {
 		return nil, ErrInvalidEmail
@@ -62,6 +64,9 @@ func (s *authService) Register(ctx context.Context, email, password, name string
 	}
 	if name == "" {
 		return nil, ErrNameRequired
+	}
+	if role == "" {
+		return nil, ErrInvalidRole
 	}
 
 	existing, err := s.userRepo.GetByEmail(ctx, email)
@@ -81,7 +86,7 @@ func (s *authService) Register(ctx context.Context, email, password, name string
 		Name:         name,
 		Email:        email,
 		PasswordHash: hash,
-		Role:         "customer",
+		Role:         role,
 	}
 
 	if err := s.userRepo.Create(ctx, user); err != nil {
@@ -94,6 +99,19 @@ func (s *authService) Register(ctx context.Context, email, password, name string
 	}
 
 	return &RegisterResult{User: user, AccessToken: token}, nil
+}
+
+func normalizeRole(role string) string {
+	switch strings.TrimSpace(strings.ToLower(role)) {
+	case "", "customer":
+		return "customer"
+	case "provider":
+		return "provider"
+	case "admin":
+		return "admin"
+	default:
+		return ""
+	}
 }
 
 func (s *authService) Login(ctx context.Context, email, password string) (*LoginResult, error) {

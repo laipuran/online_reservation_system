@@ -54,7 +54,7 @@ func newTestService() AuthService {
 func TestAuthService_Register_Success(t *testing.T) {
 	svc := newTestService()
 
-	result, err := svc.Register(context.Background(), "test@example.com", "password123", "测试用户")
+	result, err := svc.Register(context.Background(), "test@example.com", "password123", "测试用户", "")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -78,6 +78,35 @@ func TestAuthService_Register_Success(t *testing.T) {
 	}
 }
 
+func TestAuthService_RegisterProvider_ThenLoginReturnsProviderRole(t *testing.T) {
+	svc := newTestService()
+
+	result, err := svc.Register(context.Background(), "provider@example.com", "password123", "商家用户", "provider")
+	if err != nil {
+		t.Fatalf("Register() error = %v", err)
+	}
+	if result.User.Role != "provider" {
+		t.Errorf("Register() role = %s, want provider", result.User.Role)
+	}
+
+	loginResult, err := svc.Login(context.Background(), "provider@example.com", "password123")
+	if err != nil {
+		t.Fatalf("Login() error = %v", err)
+	}
+	if loginResult.User.Role != "provider" {
+		t.Errorf("Login() role = %s, want provider", loginResult.User.Role)
+	}
+}
+
+func TestAuthService_Register_InvalidRole(t *testing.T) {
+	svc := newTestService()
+
+	_, err := svc.Register(context.Background(), "bad-role@example.com", "password123", "用户", "unknown")
+	if !errors.Is(err, ErrInvalidRole) {
+		t.Errorf("Register() error = %v, want %v", err, ErrInvalidRole)
+	}
+}
+
 func TestAuthService_Register_InvalidEmail(t *testing.T) {
 	svc := newTestService()
 	tests := []struct {
@@ -92,7 +121,7 @@ func TestAuthService_Register_InvalidEmail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := svc.Register(context.Background(), tt.email, "password123", "用户")
+			_, err := svc.Register(context.Background(), tt.email, "password123", "用户", "")
 			if !errors.Is(err, ErrInvalidEmail) {
 				t.Errorf("Register() error = %v, want %v", err, ErrInvalidEmail)
 			}
@@ -112,7 +141,7 @@ func TestAuthService_Register_WeakPassword(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := svc.Register(context.Background(), "test@example.com", tt.password, "用户")
+			_, err := svc.Register(context.Background(), "test@example.com", tt.password, "用户", "")
 			if !errors.Is(err, ErrWeakPassword) {
 				t.Errorf("Register() error = %v, want %v", err, ErrWeakPassword)
 			}
@@ -122,7 +151,7 @@ func TestAuthService_Register_WeakPassword(t *testing.T) {
 
 func TestAuthService_Register_EmptyName(t *testing.T) {
 	svc := newTestService()
-	_, err := svc.Register(context.Background(), "test@example.com", "password123", "")
+	_, err := svc.Register(context.Background(), "test@example.com", "password123", "", "")
 	if !errors.Is(err, ErrNameRequired) {
 		t.Errorf("Register() error = %v, want %v", err, ErrNameRequired)
 	}
@@ -131,12 +160,12 @@ func TestAuthService_Register_EmptyName(t *testing.T) {
 func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 	svc := newTestService()
 
-	_, err := svc.Register(context.Background(), "dup@example.com", "password123", "用户A")
+	_, err := svc.Register(context.Background(), "dup@example.com", "password123", "用户A", "")
 	if err != nil {
 		t.Fatalf("first Register() error = %v", err)
 	}
 
-	_, err = svc.Register(context.Background(), "dup@example.com", "password456", "用户B")
+	_, err = svc.Register(context.Background(), "dup@example.com", "password456", "用户B", "")
 	if !errors.Is(err, ErrEmailAlreadyRegistered) {
 		t.Errorf("Register() error = %v, want %v", err, ErrEmailAlreadyRegistered)
 	}
@@ -145,12 +174,12 @@ func TestAuthService_Register_DuplicateEmail(t *testing.T) {
 func TestAuthService_Register_EmailCaseInsensitive(t *testing.T) {
 	svc := newTestService()
 
-	_, err := svc.Register(context.Background(), "Case@Test.com", "password123", "用户A")
+	_, err := svc.Register(context.Background(), "Case@Test.com", "password123", "用户A", "")
 	if err != nil {
 		t.Fatalf("first Register() error = %v", err)
 	}
 
-	_, err = svc.Register(context.Background(), "case@test.com", "password456", "用户B")
+	_, err = svc.Register(context.Background(), "case@test.com", "password456", "用户B", "")
 	if !errors.Is(err, ErrEmailAlreadyRegistered) {
 		t.Errorf("Register() error = %v, want %v", err, ErrEmailAlreadyRegistered)
 	}
@@ -159,7 +188,7 @@ func TestAuthService_Register_EmailCaseInsensitive(t *testing.T) {
 func TestAuthService_Login_Success(t *testing.T) {
 	svc := newTestService()
 
-	_, err := svc.Register(context.Background(), "login@test.com", "password123", "用户")
+	_, err := svc.Register(context.Background(), "login@test.com", "password123", "用户", "")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -182,7 +211,7 @@ func TestAuthService_Login_Success(t *testing.T) {
 func TestAuthService_Login_WrongPassword(t *testing.T) {
 	svc := newTestService()
 
-	_, err := svc.Register(context.Background(), "login@test.com", "password123", "用户")
+	_, err := svc.Register(context.Background(), "login@test.com", "password123", "用户", "")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
@@ -226,7 +255,7 @@ func TestAuthService_Login_EmptyInput(t *testing.T) {
 func TestAuthService_Login_CaseInsensitiveEmail(t *testing.T) {
 	svc := newTestService()
 
-	_, err := svc.Register(context.Background(), "user@test.com", "password123", "用户")
+	_, err := svc.Register(context.Background(), "user@test.com", "password123", "用户", "")
 	if err != nil {
 		t.Fatalf("Register() error = %v", err)
 	}
