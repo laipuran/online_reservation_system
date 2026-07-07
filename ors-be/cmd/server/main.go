@@ -54,7 +54,7 @@ func main() {
 	categoryH := handler.NewCategoryHandler(categorySvc)
 	interestH := handler.NewUserInterestHandler(interestSvc)
 
-	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, interestH, categoryH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, categoryH,interestH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,
