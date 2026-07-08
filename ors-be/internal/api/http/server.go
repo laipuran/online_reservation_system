@@ -63,6 +63,7 @@ func NewServer(
 			r.Put("/users/me/password", userH.UpdatePassword())
 			r.Get("/users/me/interests", interestH.ListMine())
 			r.Put("/users/me/interests", interestH.ReplaceMine())
+			r.Get("/users/me/reviews", reviewH.ListMine())
 			r.Get("/notifications", notificationH.ListMine())
 			r.Get("/notifications/unread-count", notificationH.CountUnread())
 			r.Put("/notifications/{id}/read", notificationH.MarkRead())
@@ -71,6 +72,7 @@ func NewServer(
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("customer"))
 				r.Post("/reservations", reservationH.Create())
+				r.Post("/reviews", reviewH.Create())
 				r.Get("/reservations", reservationH.ListMine())
 				r.Get("/reservations/{id}", reservationH.GetMine())
 				r.Put("/reservations/{id}/cancel", reservationH.CancelMine())
