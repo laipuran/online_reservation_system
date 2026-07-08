@@ -1,10 +1,25 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/hooks/use-auth";
+import { fetchMyProvider } from "../lib/api/providers";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+
+  const providerQuery = useQuery({
+    queryKey: ["my-provider-profile"],
+    queryFn: async () => {
+      try {
+        return await fetchMyProvider();
+      } catch {
+        return null;
+      }
+    },
+    enabled: !loading && user?.role === "provider",
+    retry: false,
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -12,7 +27,18 @@ export default function Dashboard() {
     }
   }, [user, loading, navigate]);
 
-  if (loading) {
+  useEffect(() => {
+    if (
+      !loading &&
+      user?.role === "provider" &&
+      !providerQuery.isLoading &&
+      providerQuery.data === null
+    ) {
+      navigate("/complete-profile", { replace: true });
+    }
+  }, [user, loading, providerQuery.isLoading, providerQuery.data, navigate]);
+
+  if (loading || providerQuery.isLoading) {
     return (
       <div className="flex items-center justify-center mt-20">
         <p className="text-gray-500">加载中...</p>
@@ -38,9 +64,28 @@ export default function Dashboard() {
         </div>
         <div>
           <span className="text-sm text-gray-500">角色</span>
-          <p className="font-medium">{user.role}</p>
+          <p className="font-medium">
+            {user.role === "provider" ? "服务提供者" : "服务体验者"}
+          </p>
         </div>
+        {user.role === "provider" && providerQuery.data && (
+          <div>
+            <span className="text-sm text-gray-500">商家名称</span>
+            <p className="font-medium">{providerQuery.data.business_name}</p>
+          </div>
+        )}
       </div>
+
+      {user.role === "provider" && (
+        <div className="mt-6">
+          <Link
+            to="/provider/services"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded text-sm hover:bg-blue-700"
+          >
+            进入服务商控制台
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

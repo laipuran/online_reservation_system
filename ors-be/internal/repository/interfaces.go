@@ -2,9 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 
 	"ors-be/internal/model"
 )
+
+var ErrReservationTimeConflict = errors.New("该时段已被预约")
 
 type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error

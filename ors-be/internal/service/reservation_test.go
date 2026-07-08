@@ -81,6 +81,54 @@ func (m *mockReservationRepo) UpdateStatus(ctx context.Context, id int64, status
 	}, nil
 }
 
+func newTestReservationService(repo *mockReservationRepo) ReservationService {
+	serviceRepo := newMockServiceRepo()
+	serviceRepo.services[2] = &model.Service{
+		ID:              2,
+		ProviderID:      1,
+		CategoryID:      1,
+		Title:           "肩颈按摩 60 分钟",
+		Price:           199,
+		DurationMinutes: 60,
+		Status:          "active",
+	}
+
+	providerRepo := newMockServiceProviderRepo()
+	_ = providerRepo.Create(context.Background(), &model.ServiceProvider{
+		UserID:       20,
+		BusinessName: "舒心养生馆",
+	})
+
+	return NewReservationService(repo, serviceRepo, providerRepo)
+}
+
+func TestReservationService_Create_Success(t *testing.T) {
+	repo := &mockReservationRepo{}
+	svc := newTestReservationService(repo)
+	start := time.Date(2026, 7, 10, 14, 0, 0, 0, time.UTC)
+
+	reservation, err := svc.Create(context.Background(), 1, ReservationInput{
+		ServiceID: 2,
+		StartTime: start,
+		Note:      " 请准备热水 ",
+	})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+	if reservation.ID == 0 {
+		t.Error("Create() ID should be non-zero")
+	}
+	if reservation.Status != ReservationStatusPending {
+		t.Errorf("Create() status = %s, want %s", reservation.Status, ReservationStatusPending)
+	}
+	if !reservation.EndTime.Equal(start.Add(time.Hour)) {
+		t.Errorf("Create() endTime = %s, want %s", reservation.EndTime, start.Add(time.Hour))
+	}
+	if reservation.Note != "请准备热水" {
+		t.Errorf("Create() note = %q", reservation.Note)
+	}
+}
+
 func TestReservationService_CancelMine_Success(t *testing.T) {
 	repo := &mockReservationRepo{
 		userReservation: &model.Reservation{
@@ -89,7 +137,7 @@ func TestReservationService_CancelMine_Success(t *testing.T) {
 			Status: ReservationStatusPending,
 		},
 	}
-	svc := NewReservationService(repo)
+	svc := newTestReservationService(repo)
 
 	reservation, err := svc.CancelMine(context.Background(), 1, 10)
 	if err != nil {
@@ -111,11 +159,11 @@ func TestReservationService_CancelMine_InvalidStatus(t *testing.T) {
 			Status: ReservationStatusCompleted,
 		},
 	}
-	svc := NewReservationService(repo)
+	svc := newTestReservationService(repo)
 
 	_, err := svc.CancelMine(context.Background(), 1, 10)
-	if !errors.Is(err, ErrReservationInvalidStatus) {
-		t.Errorf("CancelMine() error = %v, want %v", err, ErrReservationInvalidStatus)
+	if !errors.Is(err, ErrReservationCannotCancel) {
+		t.Errorf("CancelMine() error = %v, want %v", err, ErrReservationCannotCancel)
 	}
 	if repo.updatedStatus != "" {
 		t.Errorf("UpdateStatus should not be called, got %s", repo.updatedStatus)
@@ -129,7 +177,7 @@ func TestReservationService_ConfirmForProvider_Success(t *testing.T) {
 			Status: ReservationStatusPending,
 		},
 	}
-	svc := NewReservationService(repo)
+	svc := newTestReservationService(repo)
 
 	reservation, err := svc.ConfirmForProvider(context.Background(), 20, 10)
 	if err != nil {
@@ -141,16 +189,16 @@ func TestReservationService_ConfirmForProvider_Success(t *testing.T) {
 }
 
 func TestReservationService_ListMine_InvalidStatus(t *testing.T) {
-	svc := NewReservationService(&mockReservationRepo{})
+	svc := newTestReservationService(&mockReservationRepo{})
 
-	_, err := svc.ListMine(context.Background(), 1, "unknown", 20, 0)
+	_, err := svc.ListMine(context.Background(), 1, "unknown", 1, 20)
 	if !errors.Is(err, ErrReservationInvalidStatus) {
 		t.Errorf("ListMine() error = %v, want %v", err, ErrReservationInvalidStatus)
 	}
 }
 
 func TestReservationService_GetMine_NotFound(t *testing.T) {
-	svc := NewReservationService(&mockReservationRepo{})
+	svc := newTestReservationService(&mockReservationRepo{})
 
 	_, err := svc.GetMine(context.Background(), 1, 10)
 	if !errors.Is(err, ErrReservationNotFound) {
