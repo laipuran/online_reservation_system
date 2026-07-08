@@ -72,13 +72,13 @@ export function ServiceCard({
           </span>
         </div>
 
-        <div className="mt-auto flex items-end justify-between pt-3">
-          <span className="text-red-500 font-semibold text-base leading-none">
+        <div className="mt-auto flex items-center justify-between pt-3">
+          <span className="text-red-500 font-bold text-lg leading-none">
             <span className="text-sm">￥</span>
             {price}
           </span>
-          <span className="text-xs text-gray-400 leading-none">
-            {durationMinutes} 分钟
+          <span className="text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-1.5 rounded-full hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow transition-all">
+            立即预约
           </span>
         </div>
       </div>
