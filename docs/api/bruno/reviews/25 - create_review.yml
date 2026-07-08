@@ -14,7 +14,11 @@ http:
         "rating": 5,
         "comment": "Service was professional."
       }
-  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
 
 settings:
   encodeUrl: true
