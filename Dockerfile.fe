@@ -1,0 +1,18 @@
+FROM --platform=$BUILDPLATFORM node:22-slim AS builder
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY ors-fe/package.json ors-fe/package-lock.json ./ors-fe/
+COPY ors-be/package.json ./ors-be/
+RUN npm ci
+COPY ors-fe/ ./ors-fe/
+RUN npm run -w ors-fe build
+
+FROM --platform=$TARGETPLATFORM node:22-slim AS runner
+WORKDIR /app
+COPY --from=builder /app/ors-fe/build ./ors-fe/build
+COPY --from=builder /app/package.json /app/package-lock.json ./
+COPY --from=builder /app/ors-fe/package.json /app/ors-fe/package-lock.json ./ors-fe/
+COPY --from=builder /app/ors-be/package.json ./ors-be/
+RUN npm ci --omit=dev -w ors-fe
+EXPOSE 3000
+CMD ["npm", "run", "-w", "ors-fe", "start"]
