@@ -62,8 +62,7 @@ export default function Register() {
     createProfileMutation.isPending ||
     setInterestsMutation.isPending;
 
-  function handleStep1Submit(e: React.FormEvent) {
-    e.preventDefault();
+  function handleNext() {
     setError("");
 
     if (!name.trim()) {
@@ -79,11 +78,7 @@ export default function Register() {
       return;
     }
 
-    if (role === "provider") {
-      setStep(2);
-    } else {
-      setStep(2);
-    }
+    setStep(2);
   }
 
   function handleBack() {
@@ -162,7 +157,7 @@ export default function Register() {
           onEmailChange={setEmail}
           onPasswordChange={setPassword}
           onRoleChange={setRole}
-          onSubmit={handleStep1Submit}
+          onNext={handleNext}
         />
       )}
 

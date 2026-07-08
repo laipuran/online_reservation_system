@@ -1,0 +1,15 @@
+info:
+  name: search_services
+  type: http
+  seq: 6
+
+http:
+  method: GET
+  url: "http://localhost:8080/api/v1/services?keyword=按摩&page=1&page_size=20"
+  auth: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

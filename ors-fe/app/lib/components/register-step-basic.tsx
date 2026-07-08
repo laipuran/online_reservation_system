@@ -1,4 +1,4 @@
-import type { FormEvent } from "react";
+import type { KeyboardEvent } from "react";
 
 type Role = "customer" | "provider";
 
@@ -13,7 +13,7 @@ interface Props {
   onEmailChange: (v: string) => void;
   onPasswordChange: (v: string) => void;
   onRoleChange: (v: Role) => void;
-  onSubmit: (e: FormEvent) => void;
+  onNext: () => void;
 }
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
@@ -32,10 +32,16 @@ export default function RegisterStepBasic({
   onEmailChange,
   onPasswordChange,
   onRoleChange,
-  onSubmit,
+  onNext,
 }: Props) {
+  function handleKeyDown(e: KeyboardEvent) {
+    if (e.key === "Enter" && !loading) {
+      onNext();
+    }
+  }
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <div className="space-y-4" onKeyDown={handleKeyDown}>
       <div>
         <label className="block text-sm font-medium mb-1">昵称</label>
         <input
@@ -92,12 +98,13 @@ export default function RegisterStepBasic({
       </div>
       {error && <p className="text-red-500 text-sm">{error}</p>}
       <button
-        type="submit"
+        type="button"
+        onClick={onNext}
         disabled={loading}
         className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50"
       >
         {loading ? "加载中..." : "下一步"}
       </button>
-    </form>
+    </div>
   );
 }

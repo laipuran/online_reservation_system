@@ -34,6 +34,8 @@ export class ApiError extends Error {
   }
 }
 
+import { useAuthStore } from "../stores/auth.store";
+
 export async function request<T>(
   path: string,
   options: RequestInit = {}

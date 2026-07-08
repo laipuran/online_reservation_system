@@ -1,8 +1,8 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/hooks/use-auth";
-import { fetchMyProviderProfile } from "../lib/api/providers";
+import { fetchMyProvider } from "../lib/api/providers";
 
 export default function Dashboard() {
   const { user, loading } = useAuth();
@@ -10,7 +10,13 @@ export default function Dashboard() {
 
   const providerQuery = useQuery({
     queryKey: ["my-provider-profile"],
-    queryFn: fetchMyProviderProfile,
+    queryFn: async () => {
+      try {
+        return await fetchMyProvider();
+      } catch {
+        return null;
+      }
+    },
     enabled: !loading && user?.role === "provider",
     retry: false,
   });
@@ -69,6 +75,17 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {user.role === "provider" && (
+        <div className="mt-6">
+          <Link
+            to="/provider/services"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded text-sm hover:bg-blue-700"
+          >
+            进入服务商控制台
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

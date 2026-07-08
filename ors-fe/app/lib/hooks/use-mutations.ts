@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
 import { login as apiLogin, register as apiRegister } from "../api/auth";
 import {
-  createProviderProfile,
-  type ProviderProfileInput,
+  createMyProvider,
+  type ProviderInput,
 } from "../api/providers";
 import { setUserInterests } from "../api/tags";
 import { useAuthStore } from "../stores/auth.store";
@@ -43,7 +43,7 @@ export function useRegister() {
 
 export function useCreateProviderProfile() {
   return useMutation({
-    mutationFn: (data: ProviderProfileInput) => createProviderProfile(data),
+    mutationFn: (data: ProviderInput) => createMyProvider(data),
   });
 }
 

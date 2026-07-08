@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"ors-be/internal/model"
@@ -32,7 +33,7 @@ func (r *reservationRepo) Create(ctx context.Context, reservation *model.Reserva
 		VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
 		RETURNING id, status, created_at, updated_at`
 
-	return r.pool.QueryRow(ctx, query,
+	err := r.pool.QueryRow(ctx, query,
 		reservation.UserID,
 		reservation.ServiceID,
 		reservation.StartTime,
@@ -45,6 +46,14 @@ func (r *reservationRepo) Create(ctx context.Context, reservation *model.Reserva
 		&reservation.CreatedAt,
 		&reservation.UpdatedAt,
 	)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.ConstraintName == "reservations_service_start_time_unique" {
+			return repository.ErrReservationTimeConflict
+		}
+		return err
+	}
+	return nil
 }
 
 func (r *reservationRepo) GetByID(ctx context.Context, id int64) (*model.Reservation, error) {

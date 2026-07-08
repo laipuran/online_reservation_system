@@ -68,3 +68,61 @@ export function fetchServices(
 export function fetchServiceById(id: number): Promise<ServiceItem> {
   return request<ServiceItem>(`/services/${id}`);
 }
+
+export interface CreateServiceInput {
+  category_id: number;
+  title: string;
+  description?: string;
+  price: number;
+  duration_minutes: number;
+  image_url?: string;
+}
+
+export type UpdateServiceInput = CreateServiceInput;
+
+export function createService(data: CreateServiceInput): Promise<ServiceItem> {
+  return request<ServiceItem>("/services", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateService(
+  id: number,
+  data: UpdateServiceInput
+): Promise<ServiceItem> {
+  return request<ServiceItem>(`/services/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  });
+}
+
+export function updateServiceStatus(
+  id: number,
+  status: "active" | "inactive"
+): Promise<ServiceItem> {
+  return request<ServiceItem>(`/services/${id}/status`, {
+    method: "PATCH",
+    body: JSON.stringify({ status }),
+  });
+}
+
+export function fetchProviderServices(
+  providerId: number,
+  params: Omit<ServiceQueryParams, "provider_id"> = {}
+): Promise<ServiceListResponse> {
+  const query = new URLSearchParams();
+  if (params.keyword) query.set("keyword", params.keyword);
+  if (params.category_id) query.set("category_id", String(params.category_id));
+  if (params.min_price) query.set("min_price", String(params.min_price));
+  if (params.max_price) query.set("max_price", String(params.max_price));
+  if (params.sort_by) query.set("sort_by", params.sort_by);
+  if (params.sort_order) query.set("sort_order", params.sort_order);
+  if (params.page) query.set("page", String(params.page));
+  if (params.page_size) query.set("page_size", String(params.page_size));
+
+  const qs = query.toString();
+  return request<ServiceListResponse>(
+    `/providers/${providerId}/services${qs ? `?${qs}` : ""}`
+  );
+}
