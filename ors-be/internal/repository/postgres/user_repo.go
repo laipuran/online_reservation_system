@@ -71,3 +71,28 @@ func (r *userRepo) GetByID(ctx context.Context, id int64) (*model.User, error) {
 	}
 	return user, nil
 }
+
+func (r *userRepo) Update(ctx context.Context, user *model.User) error {
+	query := `
+		UPDATE users
+		SET name = $1, phone = $2, avatar_url = $3, updated_at = NOW()
+		WHERE id = $4
+		RETURNING updated_at`
+
+	return r.pool.QueryRow(ctx, query,
+		user.Name,
+		nullableString(user.Phone),
+		nullableString(user.AvatarURL),
+		user.ID,
+	).Scan(&user.UpdatedAt)
+}
+
+func (r *userRepo) UpdatePassword(ctx context.Context, id int64, passwordHash string) error {
+	query := `
+		UPDATE users
+		SET password_hash = $1, updated_at = NOW()
+		WHERE id = $2`
+
+	_, err := r.pool.Exec(ctx, query, passwordHash, id)
+	return err
+}

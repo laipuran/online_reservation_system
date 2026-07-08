@@ -14,6 +14,7 @@ import (
 
 func NewServer(
 	authH *handler.AuthHandler,
+	userH *handler.UserHandler,
 	providerH *handler.ServiceProviderHandler,
 	serviceH *handler.ServiceHandler,
 	tagH *handler.TagHandler,
@@ -53,6 +54,9 @@ func NewServer(
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
+			r.Get("/users/me", userH.GetMine())
+			r.Put("/users/me", userH.UpdateMine())
+			r.Put("/users/me/password", userH.UpdatePassword())
 			r.Get("/users/me/interests", interestH.ListMine())
 			r.Put("/users/me/interests", interestH.ReplaceMine())
 
