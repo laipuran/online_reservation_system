@@ -6,7 +6,23 @@ info:
 http:
   method: GET
   url: "http://localhost:8080/api/v1/notifications?is_read=false&page=1&page_size=20"
-  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const items = body && body.data && body.data.items;
+        const notificationId = items && items[0] && items[0].id;
+        if (notificationId) {
+          bru.setEnvVar("notification_id", String(notificationId), { persist: true });
+          bru.setVar("notification_id", String(notificationId));
+        }
 
 settings:
   encodeUrl: true

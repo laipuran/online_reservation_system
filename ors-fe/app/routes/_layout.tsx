@@ -1,5 +1,12 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../lib/hooks/use-auth";
+import { NotificationBell } from "../lib/components/notification-bell";
+
+const TABS = [
+  { label: "首页", to: "/" },
+  { label: "预约项目", to: "/services" },
+  { label: "我的预约", to: "/dashboard" },
+];
 
 const TABS = [
   { label: "首页", to: "/" },
@@ -56,6 +63,10 @@ export default function Layout() {
                   >
                     {user.name}
                   </Link>
+                  <NotificationBell />
+                  <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                    {user.name.charAt(0)}
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="text-sm text-red-500 hover:underline"

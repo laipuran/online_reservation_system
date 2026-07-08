@@ -12,7 +12,6 @@ export default [
     route("register", "routes/_layout/register.tsx"),
     route("services", "routes/services/page.tsx"),
     route("services/:id", "routes/services/service-detail.tsx"),
-    route("my-reservations", "routes/_layout/my-reservations.tsx"),
     route("dashboard", "routes/dashboard.tsx"),
     route("complete-profile", "routes/_layout/complete-profile.tsx"),
 

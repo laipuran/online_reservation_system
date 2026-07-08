@@ -81,6 +81,15 @@ export const db = factory({
     user_id: Number,
     tag_id: Number,
   },
+  notification: {
+    id: primaryKey(Number),
+    user_id: Number,
+    title: String,
+    content: String,
+    type: String,
+    is_read: Boolean,
+    created_at: String,
+  },
 });
 
 const now = "2026-07-08T00:00:00Z";
@@ -662,6 +671,34 @@ export function seed() {
     service_id: 1,
     rating: 5,
     comment: "非常专业，按完之后舒服多了。",
+    created_at: now,
+  });
+
+  db.notification.create({
+    id: 1,
+    user_id: 1,
+    title: "预约已确认",
+    content: "您预约的「肩颈按摩 60 分钟」已由舒心养生馆确认，请按时到达。",
+    type: "reservation_confirmed",
+    is_read: false,
+    created_at: now,
+  });
+  db.notification.create({
+    id: 2,
+    user_id: 1,
+    title: "预约即将开始",
+    content: "您预约的「深层清洁护肤」将于 2026-07-11 10:00 开始，请提前准备。",
+    type: "reservation_reminder",
+    is_read: false,
+    created_at: now,
+  });
+  db.notification.create({
+    id: 3,
+    user_id: 1,
+    title: "预约已创建",
+    content: "您已成功预约「全身推拿 90 分钟」，请耐心等待商家确认。",
+    type: "system",
+    is_read: true,
     created_at: now,
   });
 }

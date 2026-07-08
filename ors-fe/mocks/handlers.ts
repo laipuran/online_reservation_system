@@ -393,6 +393,7 @@ export const handlers = [
     const max = db.reservation.count();
     const now = new Date().toISOString();
     const svc = db.service.findFirst({ where: { id: { equals: body.service_id } } });
+    if (!svc) return err("服务不存在", 404);
     const endTime = new Date(new Date(body.start_time).getTime() + (svc?.duration_minutes ?? 60) * 60000).toISOString();
     const r = db.reservation.create({
       id: max + 1,
@@ -405,7 +406,20 @@ export const handlers = [
       created_at: now,
       updated_at: now,
     });
-    return json(r, 201, "created");
+    const p = db.provider.findFirst({ where: { id: { equals: svc.provider_id } } });
+    return json({
+      id: r.id,
+      service: {
+        id: svc.id,
+        title: svc.title,
+        provider: { id: p?.id ?? 0, business_name: p?.business_name ?? "" },
+      },
+      start_time: r.start_time,
+      end_time: r.end_time,
+      status: r.status,
+      note: r.note,
+      created_at: r.created_at,
+    }, 201, "created");
   }),
 
   http.get(`${API}/reservations`, ({ request }) => {
@@ -417,27 +431,43 @@ export const handlers = [
     let list = db.reservation.findMany({ where: { user_id: { equals: userId } } });
     if (status) list = list.filter((r) => r.status === status);
     list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    const items = list.slice(offset, offset + pageSize);
-    return json({ items, page, page_size: pageSize });
+    const items = list.map((r) => {
+      const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
+      const p = svc ? db.provider.findFirst({ where: { id: { equals: svc.provider_id } } }) : null;
+      return {
+        ...r,
+        service: svc
+          ? { id: svc.id, title: svc.title, provider: { id: p?.id ?? 0, business_name: p?.business_name ?? "" } }
+          : null,
+      };
+    });
+    const sliced = items.slice(offset, offset + pageSize);
+    return json({ items: sliced, page, page_size: pageSize });
   }),
 
-  http.get(`${API}/reservations/:id`, ({ request, params }) => {
+  http.get(`${API}/reservations/:id`, ({ params, request }) => {
     const userId = getUserId(request);
     if (!userId) return err("缺少认证信息", 401);
     const id = Number(params.id);
-    const r = db.reservation.findFirst({ where: { id: { equals: id } } });
+    const r = db.reservation.findFirst({ where: { id: { equals: id }, user_id: { equals: userId } } });
     if (!r) return err("预约不存在", 404);
-    if (r.user_id !== userId) return err("权限不足", 403);
-    return json(r);
+    const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
+    const p = svc ? db.provider.findFirst({ where: { id: { equals: svc.provider_id } } }) : null;
+    return json({
+      ...r,
+      service: svc
+        ? { id: svc.id, title: svc.title, provider: { id: p?.id ?? 0, business_name: p?.business_name ?? "" } }
+        : null,
+    });
   }),
 
-  http.put(`${API}/reservations/:id/cancel`, ({ request, params }) => {
+  http.put(`${API}/reservations/:id/cancel`, ({ params, request }) => {
     const userId = getUserId(request);
     if (!userId) return err("缺少认证信息", 401);
     const id = Number(params.id);
-    const r = db.reservation.findFirst({ where: { id: { equals: id } } });
+    const r = db.reservation.findFirst({ where: { id: { equals: id }, user_id: { equals: userId } } });
     if (!r) return err("预约不存在", 404);
-    if (r.user_id !== userId) return err("权限不足", 403);
+    if (r.status !== "pending" && r.status !== "confirmed") return err("当前预约状态不可取消", 400);
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "cancelled", updated_at: new Date().toISOString() },
@@ -474,5 +504,54 @@ export const handlers = [
       return t ? { id: t.id, name: t.name, created_at: t.created_at } : null;
     }).filter(Boolean);
     return json(tags);
+  }),
+
+  /* ── Notifications ───────────────────────────────────── */
+
+  http.get(`${API}/notifications`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const url = new URL(request.url);
+    const isRead = url.searchParams.get("is_read");
+    let list = db.notification.findMany({ where: { user_id: { equals: userId } } });
+    if (isRead === "true") list = list.filter((n) => n.is_read);
+    else if (isRead === "false") list = list.filter((n) => !n.is_read);
+    list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    return json(list);
+  }),
+
+  http.get(`${API}/notifications/unread-count`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const list = db.notification.findMany({ where: { user_id: { equals: userId } } });
+    const count = list.filter((n) => !n.is_read).length;
+    return json({ count });
+  }),
+
+  http.put(`${API}/notifications/:id/read`, ({ params, request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const id = Number(params.id);
+    const n = db.notification.findFirst({ where: { id: { equals: id }, user_id: { equals: userId } } });
+    if (!n) return err("通知不存在", 404);
+    const updated = db.notification.update({
+      where: { id: { equals: id } },
+      data: { is_read: true },
+    });
+    return json(updated);
+  }),
+
+  http.put(`${API}/notifications/read-all`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const list = db.notification.findMany({ where: { user_id: { equals: userId } } });
+    let affected = 0;
+    for (const n of list) {
+      if (!n.is_read) {
+        db.notification.update({ where: { id: { equals: n.id } }, data: { is_read: true } });
+        affected++;
+      }
+    }
+    return json({ affected });
   }),
 ];

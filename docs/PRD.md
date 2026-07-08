@@ -86,7 +86,6 @@
 |------|------|------|
 | 用户 / 消费者 | Customer / User | 使用平台浏览和预约服务的个人 |
 | 服务提供者 / 商家 | Service Provider | 在平台注册并发布服务的企业或个人 |
-| 管理员 | Admin | 平台运营管理人员 |
 | 预约 | Reservation | 用户选定服务和时间段后创建的预约记录 |
 | 服务 | Service | 商家发布的具体的服务项目 |
 | JWT | JSON Web Token | 用于前后端分离架构的无状态认证 token |
@@ -101,7 +100,6 @@
 |------|---------|---------|
 | 普通用户 | Customer | 浏览服务、创建和管理预约、发表评价 |
 | 服务提供者 | Provider | 发布和管理服务、查看和处理预约、回复评价 |
-| 管理员 | Admin | 用户管理、审核服务、系统配置 |
 
 ### 2.2 用户故事
 
@@ -139,14 +137,9 @@
 | US-23 | 服务提供者 | 查看我收到的用户评价 | 了解服务质量反馈 |
 | US-24 | 服务提供者 | 修改商家资料 | 更新联系方式、地址等信息 |
 
-#### 2.2.3 管理员（Admin）
 
 | 编号 | As a | I want to | So that |
 |------|------|-----------|---------|
-| US-25 | 管理员 | 登录管理后台 | 管理系统运行 |
-| US-26 | 管理员 | 查看所有用户列表 | 进行用户管理 |
-| US-27 | 管理员 | 查看所有服务提供者列表 | 审核商家资质 |
-| US-28 | 管理员 | 查看和审核服务信息 | 确保服务内容合规 |
 
 ### 2.3 业务流程图
 
@@ -249,14 +242,10 @@ flowchart TD
     F --> D
     E -->|信息完整| G[提交审核]
     G --> H[服务状态: 待审核]
-    H --> I[管理员审核]
-    I --> J{审核结果}
-    J -->|通过| K[状态变为: 已上架<br/>用户可预约]
-    J -->|驳回| L[状态变为: 审核驳回<br/>通知提供者修改]
-    L --> D
+    H --> K[状态变为: 已上架<br/>用户可预约]
 ```
 
-> **注**：为降低 MVP 复杂度，审核流程在初始版本中可简化为发布即上架，后续迭代加入审核机制。本文档保留审核流程作为参考。
+> **注**：为降低 MVP 复杂度，服务发布后直接上架，无需审核流程。
 
 ---
 
@@ -285,16 +274,12 @@ graph TB
         UC14(处理预约请求)
         UC15(查看评价)
         UC16(管理商家资料)
-        UC17(管理用户)
-        UC18(管理服务提供者)
-        UC19(审核服务)
-        UC20(设置兴趣标签)
-        UC21(查看推荐服务)
+        UC17(设置兴趣标签)
+        UC18(查看推荐服务)
     end
 
     Customer((普通用户))
     Provider((服务提供者))
-    Admin((管理员))
 
     Customer --- UC1
     Customer --- UC2
@@ -306,8 +291,8 @@ graph TB
     Customer --- UC8
     Customer --- UC9
     Customer --- UC10
-    Customer -.- UC20
-    Customer -.- UC21
+    Customer -.- UC17
+    Customer -.- UC18
 
     Provider --- UC1
     Provider --- UC2
@@ -317,14 +302,9 @@ graph TB
     Provider --- UC14
     Provider --- UC15
     Provider --- UC16
-
-    Admin --- UC2
-    Admin --- UC17
-    Admin --- UC18
-    Admin --- UC19
 ```
 
-> 说明：虚线表示可选功能用例。`UC1` 注册账户和 `UC2` 登录系统为多角色共享用例。
+> 说明：虚线表示可选功能用例。`UC1` 注册账户和 `UC2` 登录系统为多角色共享用例。`UC17` 设置兴趣标签和 `UC18` 查看推荐服务为可选功能。
 
 #### 3.1.2 普通用户子用例图
 
@@ -362,8 +342,8 @@ graph TB
 
     UC_Review --> UC9(发表评价)
 
-    UC_Profile --> UC20(设置兴趣标签)
-    UC_Rec --> UC21(查看推荐服务)
+    UC_Profile --> UC17(设置兴趣标签)
+    UC_Rec --> UC18(查看推荐服务)
 ```
 
 #### 3.1.3 服务提供者子用例图
@@ -581,7 +561,6 @@ graph TB
     subgraph 外部实体
         Customer((普通用户))
         Provider((服务提供者))
-        Admin((管理员))
     end
 
     subgraph 系统边界
@@ -593,9 +572,6 @@ graph TB
 
     Provider -- "注册信息\n服务信息\n预约处理" --> ORS
     ORS -- "预约请求\n评价通知" --> Provider
-
-    Admin -- "管理操作\n审核信息" --> ORS
-    ORS -- "系统数据\n统计信息" --> Admin
 ```
 
 #### 3.3.2 0 层数据流图
@@ -605,7 +581,6 @@ graph TB
     subgraph 外部实体
         Customer((普通用户))
         Provider((服务提供者))
-        Admin((管理员))
     end
 
     subgraph 系统加工
@@ -652,9 +627,6 @@ graph TB
     P6 -->|读取| D6
     P6 -->|读取| D2
     P6 -->|推荐结果| Customer
-
-    Admin -->|管理操作| P2
-    Admin -->|管理操作| D1
 ```
 
 ### 3.4 类图
@@ -977,7 +949,7 @@ erDiagram
 | password_hash | VARCHAR | 255 | NO | - | - | bcrypt 哈希密码 |
 | phone | VARCHAR | 20 | YES | NULL | - | 手机号 |
 | avatar_url | VARCHAR | 500 | YES | NULL | - | 头像 URL |
-| role | VARCHAR | 20 | NO | 'customer' | CHECK(role IN ('customer','provider','admin')) | 用户角色 |
+| role | VARCHAR | 20 | NO | 'customer' | CHECK(role IN ('customer','provider')) | 用户角色 |
 | created_at | TIMESTAMPTZ | - | NO | NOW() | - | 创建时间 |
 | updated_at | TIMESTAMPTZ | - | NO | NOW() | - | 更新时间 |
 
@@ -1211,7 +1183,7 @@ erDiagram
 | 密码安全 | 使用 bcrypt 算法哈希存储，不保存明文 |
 | 认证方式 | JWT 无状态 Token，设置合理的过期时间（建议 24h） |
 | 接口鉴权 | 敏感接口需要携带有效 JWT Token 方可访问 |
-| 权限控制 | 基于角色的访问控制（RBAC）：customer / provider / admin |
+| 权限控制 | 基于角色的访问控制（RBAC）：customer / provider |
 | SQL 注入防护 | 使用参数化查询（pgx 原生支持） |
 | XSS 防护 | React 默认转义输出内容，设置 HTTP-only Cookie |
 | CSRF 防护 | 前后端分离架构下，使用 Token 认证天然免疫 |

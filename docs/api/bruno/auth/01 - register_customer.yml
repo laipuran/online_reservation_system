@@ -1,0 +1,35 @@
+info:
+  name: register_customer
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://localhost:8080/api/v1/auth/register
+  body:
+    type: json
+    data: |-
+      {
+        "email": "bruno_customer@example.com",
+        "password": "123@abc123",
+        "name": "Bruno 普通用户",
+        "role": "customer"
+      }
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const token = body && body.data && body.data.access_token;
+        if (token) {
+          bru.setEnvVar("customer_token", token, { persist: true });
+          bru.setVar("customer_token", token);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
