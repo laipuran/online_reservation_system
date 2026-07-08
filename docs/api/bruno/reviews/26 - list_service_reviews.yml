@@ -1,0 +1,15 @@
+info:
+  name: list_service_reviews
+  type: http
+  seq: 26
+
+http:
+  method: GET
+  url: "http://localhost:8080/api/v1/services/1/reviews?page=1&page_size=20"
+  auth: none
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
