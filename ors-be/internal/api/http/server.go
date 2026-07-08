@@ -17,7 +17,9 @@ func NewServer(
 	providerH *handler.ServiceProviderHandler,
 	serviceH *handler.ServiceHandler,
 	tagH *handler.TagHandler,
+	categoryH *handler.CategoryHandler,
 	interestH *handler.UserInterestHandler,
+	reservationH *handler.ReservationHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -40,6 +42,7 @@ func NewServer(
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
+		r.Get("/categories", categoryH.List())
 		r.Get("/providers/{id}", providerH.GetByID())
 		r.Get("/providers/{id}/services", serviceH.ListByProvider())
 		r.Get("/services", serviceH.List())
@@ -54,6 +57,14 @@ func NewServer(
 			r.Put("/users/me/interests", interestH.ReplaceMine())
 
 			r.Group(func(r chi.Router) {
+				r.Use(middleware.RequireRole("customer"))
+				r.Post("/reservations", reservationH.Create())
+				r.Get("/reservations", reservationH.ListMine())
+				r.Get("/reservations/{id}", reservationH.GetMine())
+				r.Put("/reservations/{id}/cancel", reservationH.CancelMine())
+			})
+
+			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("provider"))
 				r.Post("/tags", tagH.Create())
 				r.Post("/providers/me", providerH.CreateMine())
@@ -63,6 +74,9 @@ func NewServer(
 				r.Put("/services/{id}", serviceH.Update())
 				r.Patch("/services/{id}/status", serviceH.UpdateStatus())
 				r.Put("/services/{id}/tags", serviceH.ReplaceTags())
+				r.Get("/provider/reservations", reservationH.ListForProvider())
+				r.Put("/provider/reservations/{id}/confirm", reservationH.ConfirmForProvider())
+				r.Put("/provider/reservations/{id}/reject", reservationH.RejectForProvider())
 			})
 		})
 	})
