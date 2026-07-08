@@ -1,10 +1,8 @@
 # 预约模块
 
-> 本文档为 TASK-002 的 API 契约设计，接口运行时业务逻辑待后续落地。本轮仅保证契约覆盖 PRD 5.4，不表示这些接口已经注册或可调用。
-
 ## POST /api/v1/reservations
 
-创建预约。服务端后续实现时应根据服务时长计算 `end_time`，初始状态为 `pending`。
+创建预约。服务端根据服务时长计算 `end_time`，初始状态为 `pending`。
 
 ### 认证
 
@@ -24,7 +22,7 @@
 {
   "service_id": 1,
   "start_time": "2026-07-10T14:00:00Z",
-  "note": "Please prepare hot water"
+  "note": "请准备热水"
 }
 ```
 
@@ -42,14 +40,19 @@
   "message": "created",
   "data": {
     "id": 1001,
-    "user_id": 1,
-    "service_id": 1,
+    "service": {
+      "id": 1,
+      "title": "肩颈按摩 60 分钟",
+      "provider": {
+        "id": 1,
+        "business_name": "舒心养生馆"
+      }
+    },
     "start_time": "2026-07-10T14:00:00Z",
     "end_time": "2026-07-10T15:00:00Z",
     "status": "pending",
-    "note": "Please prepare hot water",
-    "created_at": "2026-07-07T09:00:00Z",
-    "updated_at": "2026-07-07T09:00:00Z"
+    "note": "请准备热水",
+    "created_at": "2026-07-07T09:00:00Z"
   }
 }
 ```
@@ -63,7 +66,7 @@
 | 请求体非法或字段无效 | 400 | 无效的请求体 / 预约参数无效 |
 | 服务不存在或不可预约 | 404 | 服务不存在 |
 | 同一服务同一开始时间已被预约 | 409 | 该时段已被预约 |
-| 服务模块能力尚未落地 | 500 | 预约创建暂不可用 |
+| 服务端异常 | 500 | 预约操作失败 |
 
 ### 示例
 
@@ -71,7 +74,7 @@
 curl -s -X POST http://localhost:8080/api/v1/reservations \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"service_id":1,"start_time":"2026-07-10T14:00:00Z","note":"Please prepare hot water"}'
+  -d '{"service_id":1,"start_time":"2026-07-10T14:00:00Z","note":"请准备热水"}'
 ```
 
 ---
@@ -176,7 +179,7 @@ curl -s "http://localhost:8080/api/v1/reservations?status=pending&page=1&page_si
     "start_time": "2026-07-10T14:00:00Z",
     "end_time": "2026-07-10T15:00:00Z",
     "status": "confirmed",
-    "note": "Please prepare hot water",
+    "note": "请准备热水",
     "created_at": "2026-07-07T09:00:00Z",
     "updated_at": "2026-07-07T10:00:00Z"
   }
