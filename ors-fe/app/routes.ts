@@ -12,5 +12,13 @@ export default [
     route("register", "routes/_layout/register.tsx"),
     route("dashboard", "routes/dashboard.tsx"),
     route("services/:id", "routes/services/service-detail.tsx"),
+
+    layout("routes/provider/_layout.tsx", [
+      route("provider/services", "routes/provider/services/page.tsx"),
+      route("provider/services/new", "routes/provider/services/new.tsx"),
+      route("provider/services/:id", "routes/provider/services/service-detail.tsx"),
+      route("provider/services/:id/edit", "routes/provider/services/edit.tsx"),
+      route("provider/reservations", "routes/provider/reservations/page.tsx"),
+    ]),
   ]),
 ] satisfies RouteConfig;

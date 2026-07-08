@@ -32,11 +32,13 @@ export class ApiError extends Error {
   }
 }
 
+import { useAuthStore } from "../stores/auth.store";
+
 export async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem("access_token");
+  const token = useAuthStore.getState().token;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),

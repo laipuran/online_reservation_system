@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useNavigate } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { useAuth } from "../lib/hooks/use-auth";
 
 export default function Dashboard() {
@@ -41,6 +41,17 @@ export default function Dashboard() {
           <p className="font-medium">{user.role}</p>
         </div>
       </div>
+
+      {user.role === "provider" && (
+        <div className="mt-6">
+          <Link
+            to="/provider/services"
+            className="inline-block bg-blue-600 text-white px-6 py-2 rounded text-sm hover:bg-blue-700"
+          >
+            进入服务商控制台
+          </Link>
+        </div>
+      )}
     </div>
   );
 }
