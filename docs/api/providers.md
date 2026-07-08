@@ -74,10 +74,10 @@ curl -s http://localhost:8080/api/v1/providers/1
 | 字段 | 类型 | 必填 | 说明 |
 |------|------|------|------|
 | business_name | string | 是 | 商家名称 |
-| description | string | 否 | 商家简介 |
-| address | string | 否 | 地址 |
+| description | string | 是 | 商家简介 |
+| address | string | 是 | 地址 |
 | phone | string | 否 | 联系电话 |
-| email | string | 否 | 联系邮箱，保存前自动转小写 |
+| contact_email | string | 是 | 联系邮箱，保存前自动转小写 |
 | logo_url | string | 否 | Logo URL |
 
 ### 成功响应 (201)
