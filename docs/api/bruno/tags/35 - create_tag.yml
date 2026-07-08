@@ -1,0 +1,21 @@
+info:
+  name: create_tag
+  type: http
+  seq: 35
+
+http:
+  method: POST
+  url: http://localhost:8080/api/v1/tags
+  body:
+    type: json
+    data: |-
+      {
+        "name": "放松"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

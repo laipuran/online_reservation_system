@@ -1,0 +1,21 @@
+info:
+  name: update_service_tags
+  type: http
+  seq: 12
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/services/1/tags
+  body:
+    type: json
+    data: |-
+      {
+        "tag_ids": [1, 2, 3]
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
