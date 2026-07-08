@@ -17,7 +17,11 @@ http:
         "duration_minutes": 90,
         "image_url": "https://example.com/service-new.png"
       }
-  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{provider_token}}
+      enabled: true
+  auth: none
 
 settings:
   encodeUrl: true

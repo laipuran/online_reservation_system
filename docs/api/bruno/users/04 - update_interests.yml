@@ -12,7 +12,11 @@ http:
       {
         "tag_ids": [1, 2, 3]
       }
-  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
 
 settings:
   encodeUrl: true

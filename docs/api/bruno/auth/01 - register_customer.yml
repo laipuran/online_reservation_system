@@ -1,5 +1,5 @@
 info:
-  name: register
+  name: register_customer
   type: http
   seq: 1
 
@@ -10,9 +10,9 @@ http:
     type: json
     data: |-
       {
-        "email": "zhangsan@example.com",
-        "password": "Abcd1234",
-        "name": "张三",
+        "email": "bruno_customer@example.com",
+        "password": "123@abc123",
+        "name": "Bruno 普通用户",
         "role": "customer"
       }
   auth: none

@@ -1,7 +1,7 @@
 info:
-  name: login
+  name: login_provider
   type: http
-  seq: 2
+  seq: 4
 
 http:
   method: POST
@@ -10,7 +10,7 @@ http:
     type: json
     data: |-
       {
-        "email": "test@test.com",
+        "email": "bruno_provider@example.com",
         "password": "123@abc123"
       }
   auth: none

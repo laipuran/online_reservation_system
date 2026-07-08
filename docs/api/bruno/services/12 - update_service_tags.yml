@@ -6,13 +6,20 @@ info:
 http:
   method: PUT
   url: http://localhost:8080/api/v1/services/1/tags
+  headers:
+    - name: Authorization
+      value: Bearer {{provider_token}}
   body:
     type: json
     data: |-
       {
         "tag_ids": [1, 2, 3]
       }
-  auth: inherit
+
+runtime:
+  variables:
+    - name: provider_token
+      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3LCJyb2xlIjoicHJvdmlkZXIiLCJzdWIiOiI3IiwiZXhwIjoxNzgzNTg3MzYxLCJpYXQiOjE3ODM1MDA5NjF9.aMT0H3SzEzhef9TeM4JNeGzImN7g79faR3Far2Hmr7c
 
 settings:
   encodeUrl: true
