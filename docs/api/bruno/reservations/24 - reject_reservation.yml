@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: http://localhost:8080/api/v1/provider/reservations/1/reject
+  url: http://localhost:8080/api/v1/provider/reservations/{{reservation_id}}/reject
   headers:
     - name: Authorization
       value: Bearer {{provider_token}}

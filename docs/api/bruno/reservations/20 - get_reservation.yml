@@ -5,15 +5,10 @@ info:
 
 http:
   method: GET
-  url: http://localhost:8080/api/v1/reservations/1
+  url: http://localhost:8080/api/v1/reservations/{{reservation_id}}
   headers:
     - name: Authorization
       value: Bearer {{customer_token}}
-
-runtime:
-  variables:
-    - name: customer_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJyb2xlIjoiY3VzdG9tZXIiLCJzdWIiOiI2IiwiZXhwIjoxNzgzNTg3Mjk5LCJpYXQiOjE3ODM1MDA4OTl9.IQZ4Gow0hPQ3ViDDZFo4VB1IB_YKsk55zsGIIW9u1dM
 
 settings:
   encodeUrl: true

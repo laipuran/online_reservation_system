@@ -8,6 +8,18 @@ http:
   url: http://localhost:8080/api/v1/tags
   auth: none
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const items = body && body.data && body.data.items;
+        const tagId = items && items[0] && items[0].id;
+        if (tagId) {
+          bru.setEnvVar("tag_id", String(tagId), { persist: true });
+          bru.setVar("tag_id", String(tagId));
+        }
+
 settings:
   encodeUrl: true
   timeout: 0

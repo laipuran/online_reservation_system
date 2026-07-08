@@ -5,7 +5,7 @@ info:
 
 http:
   method: PATCH
-  url: http://localhost:8080/api/v1/services/1/status
+  url: http://localhost:8080/api/v1/services/{{service_id}}/status
   headers:
     - name: Authorization
       value: Bearer {{provider_token}}
@@ -13,13 +13,8 @@ http:
     type: json
     data: |-
       {
-        "status": "inactive"
+        "status": "active"
       }
-
-runtime:
-  variables:
-    - name: provider_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3LCJyb2xlIjoicHJvdmlkZXIiLCJzdWIiOiI3IiwiZXhwIjoxNzgzNTg3MzYxLCJpYXQiOjE3ODM1MDA5NjF9.aMT0H3SzEzhef9TeM4JNeGzImN7g79faR3Far2Hmr7c
 
 settings:
   encodeUrl: true

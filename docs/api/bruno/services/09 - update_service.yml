@@ -5,7 +5,7 @@ info:
 
 http:
   method: PUT
-  url: http://localhost:8080/api/v1/services/1
+  url: http://localhost:8080/api/v1/services/{{service_id}}
   body:
     type: json
     data: |-

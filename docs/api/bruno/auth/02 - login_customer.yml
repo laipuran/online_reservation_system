@@ -15,6 +15,17 @@ http:
       }
   auth: none
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const token = body && body.data && body.data.access_token;
+        if (token) {
+          bru.setEnvVar("customer_token", token, { persist: true });
+          bru.setVar("customer_token", token);
+        }
+
 settings:
   encodeUrl: true
   timeout: 0

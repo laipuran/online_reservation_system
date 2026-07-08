@@ -12,6 +12,18 @@ http:
       enabled: true
   auth: none
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const items = body && body.data && body.data.items;
+        const reservationId = items && items[0] && items[0].id;
+        if (reservationId) {
+          bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
+          bru.setVar("reservation_id", String(reservationId));
+        }
+
 settings:
   encodeUrl: true
   timeout: 0

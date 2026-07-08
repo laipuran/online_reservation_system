@@ -20,6 +20,29 @@ http:
       enabled: true
   auth: none
 
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const serviceId = Number(bru.getVar("service_id") || bru.getEnvVar("service_id") || 1);
+        const day = 24 * 60 * 60 * 1000;
+        const randomOffset = Math.floor(Math.random() * 365 * day);
+        const start = new Date(Date.now() + 30 * day + randomOffset);
+        start.setUTCSeconds(0, 0);
+        const body = req.getBody();
+        body.service_id = serviceId;
+        body.start_time = start.toISOString();
+        req.setBody(body);
+        bru.setVar("reservation_start_time", body.start_time);
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const reservationId = body && body.data && body.data.id;
+        if (reservationId) {
+          bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
+          bru.setVar("reservation_id", String(reservationId));
+        }
+
 settings:
   encodeUrl: true
   timeout: 0

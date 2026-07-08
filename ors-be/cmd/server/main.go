@@ -65,7 +65,7 @@ func main() {
 	reviewH := handler.NewReviewHandler(reviewSvc)
 	notificationH := handler.NewNotificationHandler(notificationSvc)
 
-	srv := httpsrv.NewServer(authH, userH, providerH, serviceH, tagH, categoryH, interestH, reservationH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, userH, providerH, serviceH, tagH, categoryH, interestH, reservationH,reviewH,notificationH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

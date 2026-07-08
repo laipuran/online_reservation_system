@@ -22,9 +22,15 @@ http:
       }
 
 runtime:
-  variables:
-    - name: provider_token
-      value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo3LCJyb2xlIjoicHJvdmlkZXIiLCJzdWIiOiI3IiwiZXhwIjoxNzgzNTg3MzYxLCJpYXQiOjE3ODM1MDA5NjF9.aMT0H3SzEzhef9TeM4JNeGzImN7g79faR3Far2Hmr7c
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const serviceId = body && body.data && body.data.id;
+        if (serviceId) {
+          bru.setEnvVar("service_id", String(serviceId), { persist: true });
+          bru.setVar("service_id", String(serviceId));
+        }
 
 settings:
   encodeUrl: true

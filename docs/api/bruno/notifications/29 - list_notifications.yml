@@ -12,6 +12,18 @@ http:
       enabled: true
   auth: none
 
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const items = body && body.data && body.data.items;
+        const notificationId = items && items[0] && items[0].id;
+        if (notificationId) {
+          bru.setEnvVar("notification_id", String(notificationId), { persist: true });
+          bru.setVar("notification_id", String(notificationId));
+        }
+
 settings:
   encodeUrl: true
   timeout: 0
