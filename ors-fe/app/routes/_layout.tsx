@@ -5,7 +5,7 @@ import { NotificationBell } from "../lib/components/notification-bell";
 const TABS = [
   { label: "首页", to: "/" },
   { label: "预约项目", to: "/services" },
-  { label: "我的预约", to: "/my-reservations" },
+  { label: "我的预约", to: "/dashboard" },
 ];
 
 export default function Layout() {
