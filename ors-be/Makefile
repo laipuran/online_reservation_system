@@ -24,6 +24,10 @@ migrate-create:
 	@read -p "Enter migration name: " name; \
 	migrate create -ext sql -dir migrations -seq $$name
 
+seed:
+	@echo "Seeding reference data..."
+	psql "$(DB_URL)" -f db/seed.sql
+
 .PHONY: deps
 deps:
 	go mod tidy
