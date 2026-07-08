@@ -8,6 +8,15 @@ export function meta({}: Route.MetaArgs) {
   return [{ title: "自助预约项目 - ORS" }];
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 export default function ServicesPage() {
   const { data: categories = [] } = useCategories();
   const { data: servicesData, isLoading } = useServices({ page_size: 50 });
@@ -38,19 +47,7 @@ export default function ServicesPage() {
     return services.filter((s) => allowed.includes(s.category.id));
   }, [services, selectedParentId, childIdsByParent]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<number, typeof filtered>();
-    if (selectedParentId === null) {
-      for (const p of parentCategories) {
-        const allowed = childIdsByParent.get(p.id) ?? [p.id];
-        const match = filtered.filter((s) => allowed.includes(s.category.id));
-        if (match.length > 0) map.set(p.id, match);
-      }
-    } else {
-      map.set(selectedParentId, filtered);
-    }
-    return map;
-  }, [filtered, selectedParentId, parentCategories, childIdsByParent]);
+  const shuffled = useMemo(() => shuffle(filtered), [filtered]);
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -96,36 +93,47 @@ export default function ServicesPage() {
         <div className="flex items-center justify-center py-20">
           <p className="text-gray-400">加载中...</p>
         </div>
-      ) : [...grouped.entries()].length === 0 ? (
+      ) : filtered.length === 0 ? (
         <div className="flex items-center justify-center py-20">
           <p className="text-gray-400">暂无服务</p>
         </div>
+      ) : selectedParentId === null ? (
+        <div className="grid grid-cols-3 gap-6">
+          {shuffled.map((s) => (
+            <ServiceCard
+              key={s.id}
+              id={s.id}
+              title={s.title}
+              description={s.description}
+              price={s.price}
+              durationMinutes={s.duration_minutes}
+              avgRating={s.avg_rating}
+              imageUrl={s.image_url}
+              status={s.status}
+            />
+          ))}
+        </div>
       ) : (
-        [...grouped.entries()].map(([parentId, items]) => {
-          const parentName = categories.find((c) => c.id === parentId)?.name ?? "";
-          return (
-            <section key={parentId} className="mb-10">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                {parentName}
-              </h2>
-              <div className="grid grid-cols-3 gap-6">
-                {items.map((s) => (
-                  <ServiceCard
-                    key={s.id}
-                    id={s.id}
-                    title={s.title}
-                    description={s.description}
-                    price={s.price}
-                    durationMinutes={s.duration_minutes}
-                    avgRating={s.avg_rating}
-                    imageUrl={s.image_url}
-                    status={s.status}
-                  />
-                ))}
-              </div>
-            </section>
-          );
-        })
+        <section>
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            {categories.find((c) => c.id === selectedParentId)?.name ?? ""}
+          </h2>
+          <div className="grid grid-cols-3 gap-6">
+            {filtered.map((s) => (
+              <ServiceCard
+                key={s.id}
+                id={s.id}
+                title={s.title}
+                description={s.description}
+                price={s.price}
+                durationMinutes={s.duration_minutes}
+                avgRating={s.avg_rating}
+                imageUrl={s.image_url}
+                status={s.status}
+              />
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );
