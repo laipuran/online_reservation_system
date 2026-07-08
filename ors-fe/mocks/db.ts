@@ -81,6 +81,15 @@ export const db = factory({
     user_id: Number,
     tag_id: Number,
   },
+  notification: {
+    id: primaryKey(Number),
+    user_id: Number,
+    title: String,
+    content: String,
+    type: String,
+    is_read: Boolean,
+    created_at: String,
+  },
 });
 
 const now = "2026-07-08T00:00:00Z";
@@ -158,12 +167,16 @@ export function seed() {
     updated_at: now,
   });
 
-  db.category.create({ id: 1, name: "医疗", description: "医疗健康服务", parent_id: 0, created_at: now });
-  db.category.create({ id: 2, name: "口腔护理", description: "口腔检查、洁牙等服务", parent_id: 1, created_at: now });
-  db.category.create({ id: 3, name: "美容", description: "美容护肤服务", parent_id: 0, created_at: now });
-  db.category.create({ id: 4, name: "健身", description: "健身指导服务", parent_id: 0, created_at: now });
-  db.category.create({ id: 5, name: "按摩", description: "推拿按摩服务", parent_id: 3, created_at: now });
-  db.category.create({ id: 6, name: "美发", description: "美发造型服务", parent_id: 3, created_at: now });
+  db.category.create({ id: 1,  name: "医疗健康", description: "体检、中医理疗、康复等服务",           parent_id: 0, created_at: now });
+  db.category.create({ id: 2,  name: "口腔护理", description: "洁牙、矫正、种植等口腔服务",           parent_id: 0, created_at: now });
+  db.category.create({ id: 3,  name: "美容护肤", description: "皮肤管理、轻医美、纹绣等服务",          parent_id: 0, created_at: now });
+  db.category.create({ id: 4,  name: "美发造型", description: "剪发、染烫、头皮护理等",               parent_id: 0, created_at: now });
+  db.category.create({ id: 5,  name: "健身运动", description: "私教、瑜伽、团课等健身服务",            parent_id: 0, created_at: now });
+  db.category.create({ id: 6,  name: "按摩推拿", description: "足疗、全身按摩、SPA 水疗等",            parent_id: 0, created_at: now });
+  db.category.create({ id: 7,  name: "家政服务", description: "保洁、家电清洗、搬家等",               parent_id: 0, created_at: now });
+  db.category.create({ id: 8,  name: "宠物服务", description: "洗护、美容、寄养等服务",               parent_id: 0, created_at: now });
+  db.category.create({ id: 9,  name: "体检中心", description: "常规体检、入职体检、高端体检套餐",      parent_id: 1, created_at: now });
+  db.category.create({ id: 10, name: "中医理疗", description: "针灸、拔罐、艾灸、中药调理",           parent_id: 1, created_at: now });
 
   db.service.create({
     id: 1,
@@ -176,7 +189,7 @@ export function seed() {
     status: "active",
     image_url: "",
     provider_id: 1,
-    category_id: 5,
+    category_id: 6,
     created_at: now,
     updated_at: now,
   });
@@ -206,7 +219,7 @@ export function seed() {
     status: "pending",
     image_url: "",
     provider_id: 1,
-    category_id: 4,
+    category_id: 5,
     created_at: now,
     updated_at: now,
   });
@@ -221,7 +234,7 @@ export function seed() {
     status: "rejected",
     image_url: "",
     provider_id: 1,
-    category_id: 5,
+    category_id: 6,
     created_at: now,
     updated_at: now,
   });
@@ -251,7 +264,7 @@ export function seed() {
     status: "active",
     image_url: "",
     provider_id: 1,
-    category_id: 4,
+    category_id: 5,
     created_at: now,
     updated_at: now,
   });
@@ -266,7 +279,7 @@ export function seed() {
     status: "active",
     image_url: "",
     provider_id: 1,
-    category_id: 5,
+    category_id: 6,
     created_at: now,
     updated_at: now,
   });
@@ -296,7 +309,7 @@ export function seed() {
     status: "active",
     image_url: "",
     provider_id: 1,
-    category_id: 5,
+    category_id: 6,
     created_at: now,
     updated_at: now,
   });
@@ -312,6 +325,36 @@ export function seed() {
     image_url: "",
     provider_id: 2,
     category_id: 2,
+    created_at: now,
+    updated_at: now,
+  });
+  db.service.create({
+    id: 11,
+    title: "入职体检套餐",
+    description: "包含常规血检、尿检、胸透、心电图等基础项目。",
+    price: 299,
+    duration_minutes: 120,
+    avg_rating: 4.2,
+    review_count: 56,
+    status: "active",
+    image_url: "",
+    provider_id: 1,
+    category_id: 9,
+    created_at: now,
+    updated_at: now,
+  });
+  db.service.create({
+    id: 12,
+    title: "艾灸调理",
+    description: "传统艾灸疗法，温经散寒，调理气血，适合亚健康人群。",
+    price: 168,
+    duration_minutes: 60,
+    avg_rating: 4.6,
+    review_count: 34,
+    status: "active",
+    image_url: "",
+    provider_id: 1,
+    category_id: 10,
     created_at: now,
     updated_at: now,
   });
@@ -399,6 +442,34 @@ export function seed() {
     service_id: 1,
     rating: 5,
     comment: "非常专业，按完之后舒服多了。",
+    created_at: now,
+  });
+
+  db.notification.create({
+    id: 1,
+    user_id: 1,
+    title: "预约已确认",
+    content: "您预约的「肩颈按摩 60 分钟」已由舒心养生馆确认，请按时到达。",
+    type: "reservation_confirmed",
+    is_read: false,
+    created_at: now,
+  });
+  db.notification.create({
+    id: 2,
+    user_id: 1,
+    title: "预约即将开始",
+    content: "您预约的「深层清洁护肤」将于 2026-07-11 10:00 开始，请提前准备。",
+    type: "reservation_reminder",
+    is_read: false,
+    created_at: now,
+  });
+  db.notification.create({
+    id: 3,
+    user_id: 1,
+    title: "预约已创建",
+    content: "您已成功预约「全身推拿 90 分钟」，请耐心等待商家确认。",
+    type: "system",
+    is_read: true,
     created_at: now,
   });
 }

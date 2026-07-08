@@ -1,5 +1,6 @@
 import { Link, Outlet, useNavigate } from "react-router";
 import { useAuth } from "../lib/hooks/use-auth";
+import { NotificationBell } from "../lib/components/notification-bell";
 
 export default function Layout() {
   const { user, loading, clearAuth } = useAuth();
@@ -18,7 +19,7 @@ export default function Layout() {
             ORS
           </Link>
           {!loading && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {user ? (
                 <>
                   <Link
@@ -27,6 +28,10 @@ export default function Layout() {
                   >
                     {user.name}
                   </Link>
+                  <NotificationBell />
+                  <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                    {user.name.charAt(0)}
+                  </div>
                   <button
                     onClick={handleLogout}
                     className="text-sm text-red-500 hover:underline"
