@@ -42,6 +42,8 @@ func main() {
 	categoryRepo := postgres.NewCategoryRepo(pool)
 	interestRepo := postgres.NewUserInterestRepo(pool)
 	reservationRepo := postgres.NewReservationRepo(pool)
+	reviewRepo := postgres.NewReviewRepo(pool)
+	notificationRepo := postgres.NewNotificationRepo(pool)
 	authSvc := service.NewAuthService(userRepo, hasher, tokenGen)
 	providerSvc := service.NewServiceProviderService(providerRepo)
 	serviceSvc := service.NewServiceService(serviceRepo, providerRepo, tagRepo, serviceTagRepo)
@@ -49,6 +51,8 @@ func main() {
 	categorySvc := service.NewCategoryService(categoryRepo)
 	interestSvc := service.NewUserInterestService(tagRepo, interestRepo)
 	reservationSvc := service.NewReservationService(reservationRepo, serviceRepo, providerRepo)
+	reviewSvc := service.NewReviewService(reviewRepo, reservationRepo)
+	notificationSvc := service.NewNotificationService(notificationRepo)
 	authH := handler.NewAuthHandler(authSvc)
 	providerH := handler.NewServiceProviderHandler(providerSvc)
 	serviceH := handler.NewServiceHandler(serviceSvc)
@@ -56,8 +60,10 @@ func main() {
 	categoryH := handler.NewCategoryHandler(categorySvc)
 	interestH := handler.NewUserInterestHandler(interestSvc)
 	reservationH := handler.NewReservationHandler(reservationSvc)
+	reviewH := handler.NewReviewHandler(reviewSvc)
+	notificationH := handler.NewNotificationHandler(notificationSvc)
 
-	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, categoryH, interestH, reservationH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, categoryH, interestH, reservationH, reviewH, notificationH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

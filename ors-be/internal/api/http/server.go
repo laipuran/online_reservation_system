@@ -20,6 +20,8 @@ func NewServer(
 	categoryH *handler.CategoryHandler,
 	interestH *handler.UserInterestHandler,
 	reservationH *handler.ReservationHandler,
+	reviewH *handler.ReviewHandler,
+	notificationH *handler.NotificationHandler,
 	tokenGen auth.TokenGenerator,
 	allowedOrigins string,
 ) http.Handler {
@@ -45,16 +47,24 @@ func NewServer(
 		r.Get("/categories", categoryH.List())
 		r.Get("/providers/{id}", providerH.GetByID())
 		r.Get("/providers/{id}/services", serviceH.ListByProvider())
+		r.Get("/providers/{id}/reviews", reviewH.ListByProvider())
 		r.Get("/services", serviceH.List())
 		r.Get("/services/{id}", serviceH.GetByID())
+		r.Get("/services/{id}/reviews", reviewH.ListByService())
 		r.Get("/services/{id}/tags", serviceH.ListTags())
 		r.Get("/tags", tagH.List())
 		r.Get("/tags/{id}", tagH.GetByID())
 
 		r.Group(func(r chi.Router) {
 			r.Use(middleware.Auth(tokenGen))
+			r.Post("/reviews", reviewH.Create())
+			r.Get("/users/me/reviews", reviewH.ListMine())
 			r.Get("/users/me/interests", interestH.ListMine())
 			r.Put("/users/me/interests", interestH.ReplaceMine())
+			r.Get("/notifications", notificationH.ListMine())
+			r.Get("/notifications/unread-count", notificationH.CountUnread())
+			r.Put("/notifications/{id}/read", notificationH.MarkRead())
+			r.Put("/notifications/read-all", notificationH.MarkAllRead())
 
 			r.Group(func(r chi.Router) {
 				r.Use(middleware.RequireRole("customer"))
