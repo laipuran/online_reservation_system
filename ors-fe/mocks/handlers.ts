@@ -39,6 +39,13 @@ function toServiceRow(s: any) {
   };
 }
 
+function getUserId(request: Request): number | null {
+  const auth = request.headers.get("Authorization");
+  if (!auth) return null;
+  const match = auth.match(/^Bearer mock-token-(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
 /* ── Auth ─────────────────────────────────────────────────── */
 
 export const handlers = [
@@ -87,20 +94,26 @@ export const handlers = [
 
   /* ── Providers ──────────────────────────────────────────── */
 
-  http.get(`${API}/providers/me`, () => {
-    const p = db.provider.findFirst({ where: { id: { equals: 1 } } });
+  http.get(`${API}/providers/me`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const p = db.provider.findFirst({ where: { user_id: { equals: userId } } });
     if (!p) return err("服务提供者不存在", 404);
     return json(p);
   }),
 
   http.post(`${API}/providers/me`, async ({ request }) => {
-    const body: any = await request.json();
-    const exists = db.provider.findFirst({ where: { id: { equals: 1 } } });
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const user = db.user.findFirst({ where: { id: { equals: userId } } });
+    if (!user || user.role !== "provider") return err("权限不足", 403);
+    const exists = db.provider.findFirst({ where: { user_id: { equals: userId } } });
     if (exists) return err("服务提供者资料已存在", 409);
+    const body: any = await request.json();
     const max = db.provider.count();
     const p = db.provider.create({
       id: max + 1,
-      user_id: 2,
+      user_id: userId,
       business_name: body.business_name,
       description: body.description ?? "",
       address: body.address ?? "",
@@ -114,11 +127,13 @@ export const handlers = [
   }),
 
   http.put(`${API}/providers/me`, async ({ request }) => {
-    const body: any = await request.json();
-    const p = db.provider.findFirst({ where: { id: { equals: 1 } } });
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const p = db.provider.findFirst({ where: { user_id: { equals: userId } } });
     if (!p) return err("服务提供者不存在", 404);
+    const body: any = await request.json();
     const updated = db.provider.update({
-      where: { id: { equals: 1 } },
+      where: { user_id: { equals: userId } },
       data: {
         business_name: body.business_name,
         description: body.description ?? "",
@@ -422,8 +437,10 @@ export const handlers = [
 
   /* ── User interests ────────────────────────────────────── */
 
-  http.get(`${API}/users/me/interests`, () => {
-    const rels = db.user_interest.findMany({ where: { user_id: { equals: 1 } } });
+  http.get(`${API}/users/me/interests`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const rels = db.user_interest.findMany({ where: { user_id: { equals: userId } } });
     const tags = rels.map((r) => {
       const t = db.tag.findFirst({ where: { id: { equals: r.tag_id } } });
       return t ? { id: t.id, name: t.name, created_at: t.created_at } : null;
@@ -432,14 +449,16 @@ export const handlers = [
   }),
 
   http.put(`${API}/users/me/interests`, async ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
     const body: any = await request.json();
-    db.user_interest.deleteMany({ where: { user_id: { equals: 1 } } });
+    db.user_interest.deleteMany({ where: { user_id: { equals: userId } } });
     let max = db.user_interest.count();
     for (const tagId of body.tag_ids) {
       max++;
-      db.user_interest.create({ id: max, user_id: 1, tag_id: tagId });
+      db.user_interest.create({ id: max, user_id: userId, tag_id: tagId });
     }
-    const rels = db.user_interest.findMany({ where: { user_id: { equals: 1 } } });
+    const rels = db.user_interest.findMany({ where: { user_id: { equals: userId } } });
     const tags = rels.map((r) => {
       const t = db.tag.findFirst({ where: { id: { equals: r.tag_id } } });
       return t ? { id: t.id, name: t.name, created_at: t.created_at } : null;
