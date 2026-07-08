@@ -387,6 +387,8 @@ export const handlers = [
   /* ── Reservations (customer) ────────────────────────────── */
 
   http.post(`${API}/reservations`, async ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
     const body: any = await request.json();
     const max = db.reservation.count();
     const now = new Date().toISOString();
@@ -394,7 +396,7 @@ export const handlers = [
     const endTime = new Date(new Date(body.start_time).getTime() + (svc?.duration_minutes ?? 60) * 60000).toISOString();
     const r = db.reservation.create({
       id: max + 1,
-      user_id: 1,
+      user_id: userId,
       service_id: body.service_id,
       start_time: body.start_time,
       end_time: endTime,
@@ -407,27 +409,35 @@ export const handlers = [
   }),
 
   http.get(`${API}/reservations`, ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
     const url = new URL(request.url);
     const { page, pageSize, offset } = pageParams(url);
     const status = url.searchParams.get("status");
-    let list = db.reservation.findMany({ where: { user_id: { equals: 1 } } });
+    let list = db.reservation.findMany({ where: { user_id: { equals: userId } } });
     if (status) list = list.filter((r) => r.status === status);
     list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     const items = list.slice(offset, offset + pageSize);
     return json({ items, page, page_size: pageSize });
   }),
 
-  http.get(`${API}/reservations/:id`, ({ params }) => {
+  http.get(`${API}/reservations/:id`, ({ request, params }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    if (r.user_id !== userId) return err("权限不足", 403);
     return json(r);
   }),
 
-  http.put(`${API}/reservations/:id/cancel`, ({ params }) => {
+  http.put(`${API}/reservations/:id/cancel`, ({ request, params }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    if (r.user_id !== userId) return err("权限不足", 403);
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "cancelled", updated_at: new Date().toISOString() },

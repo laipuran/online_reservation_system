@@ -1,0 +1,132 @@
+import { useState, useMemo } from "react";
+import { useCategories } from "../../lib/hooks/use-categories";
+import { useServices } from "../../lib/hooks/use-services";
+import { ServiceCard } from "../../lib/components/service-card";
+import type { Route } from "./+types/page";
+
+export function meta({}: Route.MetaArgs) {
+  return [{ title: "自助预约项目 - ORS" }];
+}
+
+export default function ServicesPage() {
+  const { data: categories = [] } = useCategories();
+  const { data: servicesData, isLoading } = useServices({ page_size: 50 });
+  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+
+  const parentCategories = useMemo(
+    () => categories.filter((c) => c.parent_id === 0),
+    [categories]
+  );
+
+  const childIdsByParent = useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const p of parentCategories) {
+      const ids = categories
+        .filter((c) => c.parent_id === p.id)
+        .map((c) => c.id);
+      ids.push(p.id);
+      map.set(p.id, ids);
+    }
+    return map;
+  }, [categories, parentCategories]);
+
+  const services = servicesData?.items ?? [];
+
+  const filtered = useMemo(() => {
+    if (selectedParentId === null) return services;
+    const allowed = childIdsByParent.get(selectedParentId) ?? [selectedParentId];
+    return services.filter((s) => allowed.includes(s.category.id));
+  }, [services, selectedParentId, childIdsByParent]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<number, typeof filtered>();
+    if (selectedParentId === null) {
+      for (const p of parentCategories) {
+        const allowed = childIdsByParent.get(p.id) ?? [p.id];
+        const match = filtered.filter((s) => allowed.includes(s.category.id));
+        if (match.length > 0) map.set(p.id, match);
+      }
+    } else {
+      map.set(selectedParentId, filtered);
+    }
+    return map;
+  }, [filtered, selectedParentId, parentCategories, childIdsByParent]);
+
+  return (
+    <div className="max-w-5xl mx-auto px-4 py-8">
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">自助预约项目</h1>
+          <p className="text-sm text-gray-500 mt-1">发现优质服务，轻松预约</p>
+        </div>
+        <input
+          type="text"
+          placeholder="搜索服务..."
+          className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        />
+      </div>
+
+      <div className="flex gap-2 mt-6 mb-8 flex-wrap">
+        <button
+          onClick={() => setSelectedParentId(null)}
+          className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+            selectedParentId === null
+              ? "bg-blue-600 text-white"
+              : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+          }`}
+        >
+          全部项目
+        </button>
+        {parentCategories.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setSelectedParentId(p.id)}
+            className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
+              selectedParentId === p.id
+                ? "bg-blue-600 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <p className="text-gray-400">加载中...</p>
+        </div>
+      ) : [...grouped.entries()].length === 0 ? (
+        <div className="flex items-center justify-center py-20">
+          <p className="text-gray-400">暂无服务</p>
+        </div>
+      ) : (
+        [...grouped.entries()].map(([parentId, items]) => {
+          const parentName = categories.find((c) => c.id === parentId)?.name ?? "";
+          return (
+            <section key={parentId} className="mb-10">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                {parentName}
+              </h2>
+              <div className="grid grid-cols-3 gap-6">
+                {items.map((s) => (
+                  <ServiceCard
+                    key={s.id}
+                    id={s.id}
+                    title={s.title}
+                    description={s.description}
+                    price={s.price}
+                    durationMinutes={s.duration_minutes}
+                    avgRating={s.avg_rating}
+                    imageUrl={s.image_url}
+                    status={s.status}
+                  />
+                ))}
+              </div>
+            </section>
+          );
+        })
+      )}
+    </div>
+  );
+}
