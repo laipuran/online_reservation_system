@@ -1,0 +1,26 @@
+info:
+  name: create_service
+  type: http
+  seq: 8
+
+http:
+  method: POST
+  url: http://localhost:8080/api/v1/services
+  body:
+    type: json
+    data: |-
+      {
+        "category_id": 1,
+        "title": "肩颈按摩 60 分钟",
+        "description": "缓解肩颈疲劳",
+        "price": 199,
+        "duration_minutes": 60,
+        "image_url": "https://example.com/service.png"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,3 +1,5 @@
+import { useAuthStore } from "../stores/auth.store";
+
 const BASE_URL = "http://localhost:8080/api/v1";
 
 export interface ApiResponse<T = unknown> {
@@ -36,7 +38,7 @@ export async function request<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const token = localStorage.getItem("access_token");
+  const token = useAuthStore.getState().token;
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...((options.headers as Record<string, string>) || {}),

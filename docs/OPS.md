@@ -168,6 +168,7 @@ ors-be/
 | 命令 | 说明 |
 |------|------|
 | `npm run dev` | 并行启动前后端开发模式 |
+| `npm run fe-only` | 仅启动前端，启用 MSW mock（无需后端），前端 API 请求由 Mock Service Worker 拦截并提供假数据 |
 | `npm run build` | 构建所有 workspace |
 | `npm run lint` | 对所有 workspace 执行 lint |
 | `npm run test` | 对所有 workspace 执行测试 |

@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -45,6 +46,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [ready, setReady] = useState(import.meta.env.VITE_USE_MOCK !== "true");
+
+  useEffect(() => {
+    if (import.meta.env.VITE_USE_MOCK === "true") {
+      import("../mocks/browser")
+        .then(({ worker }) => worker.start({ onUnhandledRequest: "bypass" }))
+        .then(() => setReady(true));
+    }
+  }, []);
+
+  if (!ready) return null;
+
   return (
     <QueryClientProvider client={queryClient}>
       <Outlet />

@@ -1,0 +1,26 @@
+info:
+  name: update_service
+  type: http
+  seq: 9
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/services/1
+  body:
+    type: json
+    data: |-
+      {
+        "category_id": 1,
+        "title": "肩颈按摩 90 分钟",
+        "description": "更新后的服务说明",
+        "price": 299,
+        "duration_minutes": 90,
+        "image_url": "https://example.com/service-new.png"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
