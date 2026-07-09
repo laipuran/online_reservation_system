@@ -77,8 +77,8 @@ export function ServiceCard({
             <span className="text-sm">￥</span>
             {price}
           </span>
-          <span className="text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-blue-600 px-4 py-1.5 rounded-full hover:from-blue-600 hover:to-blue-700 shadow-sm hover:shadow transition-all">
-            立即预约
+          <span className="text-sm text-gray-400">
+            {durationMinutes} 分钟
           </span>
         </div>
       </div>
