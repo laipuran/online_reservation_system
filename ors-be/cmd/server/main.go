@@ -51,9 +51,9 @@ func main() {
 	tagSvc := service.NewTagService(tagRepo)
 	categorySvc := service.NewCategoryService(categoryRepo)
 	interestSvc := service.NewUserInterestService(tagRepo, interestRepo)
-	reservationSvc := service.NewReservationService(reservationRepo, serviceRepo, providerRepo)
-	reviewSvc := service.NewReviewService(reviewRepo, reservationRepo)
 	notificationSvc := service.NewNotificationService(notificationRepo)
+	reservationSvc := service.NewReservationService(reservationRepo, serviceRepo, providerRepo, notificationSvc)
+	reviewSvc := service.NewReviewService(reviewRepo, reservationRepo)
 	authH := handler.NewAuthHandler(authSvc)
 	userH := handler.NewUserHandler(userSvc)
 	providerH := handler.NewServiceProviderHandler(providerSvc)
@@ -65,7 +65,7 @@ func main() {
 	reviewH := handler.NewReviewHandler(reviewSvc)
 	notificationH := handler.NewNotificationHandler(notificationSvc)
 
-	srv := httpsrv.NewServer(authH, userH, providerH, serviceH, tagH, categoryH, interestH, reservationH,reviewH,notificationH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, userH, providerH, serviceH, tagH, categoryH, interestH, reservationH, reviewH, notificationH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,

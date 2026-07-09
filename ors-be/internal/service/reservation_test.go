@@ -17,6 +17,41 @@ type mockReservationRepo struct {
 	err                 error
 }
 
+type mockReservationNotificationService struct {
+	notifications []NotificationInput
+	err           error
+}
+
+func (m *mockReservationNotificationService) Create(ctx context.Context, input NotificationInput) (*model.Notification, error) {
+	if m.err != nil {
+		return nil, m.err
+	}
+	m.notifications = append(m.notifications, input)
+	return &model.Notification{
+		ID:      int64(len(m.notifications)),
+		UserID:  input.UserID,
+		Title:   input.Title,
+		Content: input.Content,
+		Type:    input.Type,
+	}, nil
+}
+
+func (m *mockReservationNotificationService) ListMine(ctx context.Context, userID int64, isRead *bool, limit, offset int) ([]*model.Notification, error) {
+	return nil, nil
+}
+
+func (m *mockReservationNotificationService) CountUnread(ctx context.Context, userID int64) (int64, error) {
+	return 0, nil
+}
+
+func (m *mockReservationNotificationService) MarkRead(ctx context.Context, userID, id int64) (*model.Notification, error) {
+	return nil, nil
+}
+
+func (m *mockReservationNotificationService) MarkAllRead(ctx context.Context, userID int64) (int64, error) {
+	return 0, nil
+}
+
 func (m *mockReservationRepo) Create(ctx context.Context, reservation *model.Reservation) error {
 	if m.err != nil {
 		return m.err
@@ -82,6 +117,11 @@ func (m *mockReservationRepo) UpdateStatus(ctx context.Context, id int64, status
 }
 
 func newTestReservationService(repo *mockReservationRepo) ReservationService {
+	svc, _ := newTestReservationServiceWithNotifications(repo)
+	return svc
+}
+
+func newTestReservationServiceWithNotifications(repo *mockReservationRepo) (ReservationService, *mockReservationNotificationService) {
 	serviceRepo := newMockServiceRepo()
 	serviceRepo.services[2] = &model.Service{
 		ID:              2,
@@ -99,7 +139,8 @@ func newTestReservationService(repo *mockReservationRepo) ReservationService {
 		BusinessName: "舒心养生馆",
 	})
 
-	return NewReservationService(repo, serviceRepo, providerRepo)
+	notificationSvc := &mockReservationNotificationService{}
+	return NewReservationService(repo, serviceRepo, providerRepo, notificationSvc), notificationSvc
 }
 
 func TestReservationService_Create_Success(t *testing.T) {
@@ -137,7 +178,7 @@ func TestReservationService_CancelMine_Success(t *testing.T) {
 			Status: ReservationStatusPending,
 		},
 	}
-	svc := newTestReservationService(repo)
+	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
 
 	reservation, err := svc.CancelMine(context.Background(), 1, 10)
 	if err != nil {
@@ -148,6 +189,16 @@ func TestReservationService_CancelMine_Success(t *testing.T) {
 	}
 	if repo.updatedStatus != ReservationStatusCancelled {
 		t.Errorf("UpdateStatus status = %s, want %s", repo.updatedStatus, ReservationStatusCancelled)
+	}
+	if len(notificationSvc.notifications) != 1 {
+		t.Fatalf("notifications count = %d, want 1", len(notificationSvc.notifications))
+	}
+	notification := notificationSvc.notifications[0]
+	if notification.UserID != 20 {
+		t.Errorf("notification userID = %d, want provider user 20", notification.UserID)
+	}
+	if notification.Type != NotificationTypeReservationCancelled {
+		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeReservationCancelled)
 	}
 }
 
@@ -173,11 +224,13 @@ func TestReservationService_CancelMine_InvalidStatus(t *testing.T) {
 func TestReservationService_ConfirmForProvider_Success(t *testing.T) {
 	repo := &mockReservationRepo{
 		providerReservation: &model.Reservation{
-			ID:     10,
-			Status: ReservationStatusPending,
+			ID:        10,
+			UserID:    1,
+			ServiceID: 2,
+			Status:    ReservationStatusPending,
 		},
 	}
-	svc := newTestReservationService(repo)
+	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
 
 	reservation, err := svc.ConfirmForProvider(context.Background(), 20, 10)
 	if err != nil {
@@ -185,6 +238,46 @@ func TestReservationService_ConfirmForProvider_Success(t *testing.T) {
 	}
 	if reservation.Status != ReservationStatusConfirmed {
 		t.Errorf("ConfirmForProvider() status = %s, want %s", reservation.Status, ReservationStatusConfirmed)
+	}
+	if len(notificationSvc.notifications) != 1 {
+		t.Fatalf("notifications count = %d, want 1", len(notificationSvc.notifications))
+	}
+	notification := notificationSvc.notifications[0]
+	if notification.UserID != 1 {
+		t.Errorf("notification userID = %d, want customer user 1", notification.UserID)
+	}
+	if notification.Type != NotificationTypeReservationConfirmed {
+		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeReservationConfirmed)
+	}
+}
+
+func TestReservationService_RejectForProvider_Success(t *testing.T) {
+	repo := &mockReservationRepo{
+		providerReservation: &model.Reservation{
+			ID:        10,
+			UserID:    1,
+			ServiceID: 2,
+			Status:    ReservationStatusPending,
+		},
+	}
+	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
+
+	reservation, err := svc.RejectForProvider(context.Background(), 20, 10)
+	if err != nil {
+		t.Fatalf("RejectForProvider() error = %v", err)
+	}
+	if reservation.Status != ReservationStatusRejected {
+		t.Errorf("RejectForProvider() status = %s, want %s", reservation.Status, ReservationStatusRejected)
+	}
+	if len(notificationSvc.notifications) != 1 {
+		t.Fatalf("notifications count = %d, want 1", len(notificationSvc.notifications))
+	}
+	notification := notificationSvc.notifications[0]
+	if notification.UserID != 1 {
+		t.Errorf("notification userID = %d, want customer user 1", notification.UserID)
+	}
+	if notification.Type != NotificationTypeSystem {
+		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeSystem)
 	}
 }
 
