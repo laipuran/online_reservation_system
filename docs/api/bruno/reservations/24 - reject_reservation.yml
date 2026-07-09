@@ -12,6 +12,70 @@ http:
       enabled: true
   auth: none
 
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const customerToken = bru.getVar("customer_token") || bru.getEnvVar("customer_token");
+        const serviceId = Number(bru.getVar("service_id") || bru.getEnvVar("service_id") || 1);
+        if (!customerToken) {
+          throw new Error("customer_token is required to create a rejectable reservation");
+        }
+
+        const day = 24 * 60 * 60 * 1000;
+        const start = new Date(Date.now() + 460 * day + Math.floor(Math.random() * 30 * day));
+        start.setUTCSeconds(0, 0);
+
+        const createRes = await bru.sendRequest({
+          method: "POST",
+          url: "http://localhost:8080/api/v1/reservations",
+          headers: {
+            Authorization: "Bearer " + customerToken,
+            "Content-Type": "application/json"
+          },
+          data: {
+            service_id: serviceId,
+            start_time: start.toISOString(),
+            note: "用于拒绝通知测试"
+          }
+        });
+        if (createRes.status !== 201) {
+          throw new Error("create rejectable reservation expected 201, got " + createRes.status);
+        }
+
+        const reservationId = createRes.data && createRes.data.data && createRes.data.data.id;
+        if (!reservationId) {
+          throw new Error("create rejectable reservation response missing reservation id");
+        }
+        bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
+        bru.setVar("reservation_id", String(reservationId));
+        req.setUrl("http://localhost:8080/api/v1/provider/reservations/" + reservationId + "/reject");
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 200) {
+          throw new Error("reject_reservation expected 200, got " + res.getStatus());
+        }
+
+        const customerToken = bru.getVar("customer_token") || bru.getEnvVar("customer_token");
+        const notificationRes = await bru.sendRequest({
+          method: "GET",
+          url: "http://localhost:8080/api/v1/notifications?is_read=false&page=1&page_size=20",
+          headers: {
+            Authorization: "Bearer " + customerToken
+          }
+        });
+        if (notificationRes.status !== 200) {
+          throw new Error("customer notification list expected 200, got " + notificationRes.status);
+        }
+
+        const items = notificationRes.data && notificationRes.data.data && notificationRes.data.data.items;
+        const notification = items && items[0];
+        if (!notification || notification.type !== "system" || notification.title !== "预约已拒绝") {
+          throw new Error("rejected reservation system notification was not created for customer");
+        }
+        bru.setEnvVar("notification_id", String(notification.id), { persist: true });
+        bru.setVar("notification_id", String(notification.id));
+
 settings:
   encodeUrl: true
   timeout: 0

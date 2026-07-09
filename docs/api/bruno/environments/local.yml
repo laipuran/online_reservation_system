@@ -10,6 +10,8 @@ variables:
     value: "1"
   - name: notification_id
     value: "1"
+  - name: provider_notification_id
+    value: "1"
   - name: tag_id
     value: "1"
   - name: reservation_start_time
