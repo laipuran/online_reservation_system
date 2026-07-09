@@ -1383,6 +1383,8 @@ Request:
 }
 ```
 
+> `start_time` 不能早于当前日期，且不能晚于当前时间 3 个月后。
+
 Response (201):
 
 ```json

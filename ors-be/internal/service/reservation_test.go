@@ -156,7 +156,7 @@ func newTestReservationServiceWithNotifications(repo *mockReservationRepo) (Rese
 func TestReservationService_Create_Success(t *testing.T) {
 	repo := &mockReservationRepo{}
 	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
-	start := time.Date(2026, 7, 10, 14, 0, 0, 0, time.UTC)
+	start := time.Now().Add(24 * time.Hour).Truncate(time.Second)
 
 	reservation, err := svc.Create(context.Background(), 1, ReservationInput{
 		ServiceID: 2,
@@ -187,6 +187,38 @@ func TestReservationService_Create_Success(t *testing.T) {
 	}
 	if notification.Type != NotificationTypeSystem {
 		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeSystem)
+	}
+}
+
+func TestReservationService_Create_PastDate(t *testing.T) {
+	repo := &mockReservationRepo{}
+	svc := newTestReservationService(repo)
+
+	_, err := svc.Create(context.Background(), 1, ReservationInput{
+		ServiceID: 2,
+		StartTime: time.Now().AddDate(0, 0, -1),
+	})
+	if !errors.Is(err, ErrReservationInvalidInput) {
+		t.Errorf("Create() error = %v, want %v", err, ErrReservationInvalidInput)
+	}
+	if repo.updatedStatus != "" {
+		t.Errorf("repository should not update status, got %s", repo.updatedStatus)
+	}
+}
+
+func TestReservationService_Create_AfterThreeMonths(t *testing.T) {
+	repo := &mockReservationRepo{}
+	svc := newTestReservationService(repo)
+
+	_, err := svc.Create(context.Background(), 1, ReservationInput{
+		ServiceID: 2,
+		StartTime: time.Now().AddDate(0, 3, 1),
+	})
+	if !errors.Is(err, ErrReservationInvalidInput) {
+		t.Errorf("Create() error = %v, want %v", err, ErrReservationInvalidInput)
+	}
+	if repo.updatedStatus != "" {
+		t.Errorf("repository should not update status, got %s", repo.updatedStatus)
 	}
 }
 

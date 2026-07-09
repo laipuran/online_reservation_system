@@ -75,6 +75,9 @@ func (s *reservationService) Create(ctx context.Context, userID int64, input Res
 	if input.ServiceID <= 0 || input.StartTime.IsZero() {
 		return nil, ErrReservationInvalidInput
 	}
+	if !isReservationStartTimeAllowed(input.StartTime, time.Now()) {
+		return nil, ErrReservationInvalidInput
+	}
 
 	serviceItem, err := s.serviceRepo.GetByID(ctx, input.ServiceID)
 	if err != nil {
@@ -326,6 +329,20 @@ func normalizeReservationPagination(page, pageSize int) (int, int) {
 		pageSize = 100
 	}
 	return page, pageSize
+}
+
+func isReservationStartTimeAllowed(startTime, now time.Time) bool {
+	if startTime.IsZero() {
+		return false
+	}
+
+	location := now.Location()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+	if startTime.In(location).Before(startOfToday) {
+		return false
+	}
+
+	return !startTime.After(now.AddDate(0, 3, 0))
 }
 
 func reservationToView(reservation *model.Reservation, serviceView *model.ServiceView) *model.ReservationView {
