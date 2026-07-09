@@ -64,6 +64,9 @@ func (s *userService) UpdateMine(ctx context.Context, userID int64, input UserIn
 	if user.Name == "" {
 		return nil, ErrNameRequired
 	}
+	if user.Phone != "" && !isPhoneValid(user.Phone) {
+		return nil, ErrInvalidPhone
+	}
 
 	if err := s.userRepo.Update(ctx, user); err != nil {
 		return nil, err

@@ -65,6 +65,18 @@ func TestUserService_UpdateMine_EmptyName(t *testing.T) {
 	}
 }
 
+func TestUserService_UpdateMine_InvalidPhone(t *testing.T) {
+	svc, _ := newTestUserService()
+
+	_, err := svc.UpdateMine(context.Background(), 1, UserInput{
+		Name:  "测试用户",
+		Phone: "138--0013",
+	})
+	if !errors.Is(err, ErrInvalidPhone) {
+		t.Errorf("UpdateMine() error = %v, want %v", err, ErrInvalidPhone)
+	}
+}
+
 func TestUserService_UpdatePassword_Success(t *testing.T) {
 	svc, repo := newTestUserService()
 

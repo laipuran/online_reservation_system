@@ -108,7 +108,8 @@ func (h *ServiceProviderHandler) GetByID() http.HandlerFunc {
 func writeProviderError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, service.ErrBusinessNameRequired),
-		errors.Is(err, service.ErrInvalidEmail):
+		errors.Is(err, service.ErrInvalidEmail),
+		errors.Is(err, service.ErrInvalidPhone):
 		response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
 	case errors.Is(err, service.ErrProviderAlreadyExists):
 		response.JSON(w, http.StatusConflict, response.Conflict(err.Error()))

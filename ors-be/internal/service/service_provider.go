@@ -48,6 +48,9 @@ func (s *serviceProviderService) Create(ctx context.Context, userID int64, input
 	if provider.Email != "" && !emailRegex.MatchString(provider.Email) {
 		return nil, ErrInvalidEmail
 	}
+	if provider.Phone != "" && !isPhoneValid(provider.Phone) {
+		return nil, ErrInvalidPhone
+	}
 
 	existing, err := s.providerRepo.GetByUserID(ctx, userID)
 	if err != nil {
@@ -100,6 +103,9 @@ func (s *serviceProviderService) UpdateMine(ctx context.Context, userID int64, i
 	}
 	if updated.Email != "" && !emailRegex.MatchString(updated.Email) {
 		return nil, ErrInvalidEmail
+	}
+	if updated.Phone != "" && !isPhoneValid(updated.Phone) {
+		return nil, ErrInvalidPhone
 	}
 
 	existing.BusinessName = updated.BusinessName

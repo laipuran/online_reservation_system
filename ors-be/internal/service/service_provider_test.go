@@ -107,6 +107,18 @@ func TestServiceProviderService_Create_InvalidEmail(t *testing.T) {
 	}
 }
 
+func TestServiceProviderService_Create_InvalidPhone(t *testing.T) {
+	svc := newTestServiceProviderService()
+
+	_, err := svc.Create(context.Background(), 1, ServiceProviderInput{
+		BusinessName: "商家A",
+		Phone:        "138abc",
+	})
+	if !errors.Is(err, ErrInvalidPhone) {
+		t.Errorf("Create() error = %v, want %v", err, ErrInvalidPhone)
+	}
+}
+
 func TestServiceProviderService_Create_DuplicateUser(t *testing.T) {
 	svc := newTestServiceProviderService()
 
@@ -167,6 +179,23 @@ func TestServiceProviderService_UpdateMine_InvalidEmail(t *testing.T) {
 	})
 	if !errors.Is(err, ErrInvalidEmail) {
 		t.Errorf("UpdateMine() error = %v, want %v", err, ErrInvalidEmail)
+	}
+}
+
+func TestServiceProviderService_UpdateMine_InvalidPhone(t *testing.T) {
+	svc := newTestServiceProviderService()
+
+	_, err := svc.Create(context.Background(), 1, ServiceProviderInput{BusinessName: "旧商家"})
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	_, err = svc.UpdateMine(context.Background(), 1, ServiceProviderInput{
+		BusinessName: "新商家",
+		Phone:        " -- ",
+	})
+	if !errors.Is(err, ErrInvalidPhone) {
+		t.Errorf("UpdateMine() error = %v, want %v", err, ErrInvalidPhone)
 	}
 }
 
