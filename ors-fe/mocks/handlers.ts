@@ -1,7 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { db } from "./db";
 
-const API = "http://localhost:8080/api/v1";
+const API = "/api/v1";
 
 function json(data: unknown, code = 200, message = "ok") {
   return HttpResponse.json({ code, message, data }, { status: code });
