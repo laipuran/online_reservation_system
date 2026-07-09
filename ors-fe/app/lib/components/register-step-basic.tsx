@@ -107,7 +107,6 @@ export default function RegisterStepBasic({
           ))}
         </div>
       </div>
-      {error && <p className="text-red-500 text-sm">{error}</p>}
       <button
         type="button"
         onClick={onNext}
