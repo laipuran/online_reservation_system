@@ -118,6 +118,26 @@ func TestProviderHandler_CreateMine_BusinessNameRequired(t *testing.T) {
 	}
 }
 
+func TestProviderHandler_CreateMine_InvalidEmail(t *testing.T) {
+	svc := &mockServiceProviderService{
+		createFn: func(_ context.Context, _ int64, _ service.ServiceProviderInput) (*model.ServiceProvider, error) {
+			return nil, service.ErrInvalidEmail
+		},
+	}
+	h := NewServiceProviderHandler(svc)
+
+	body := `{"business_name":"test","email":"bad-email"}`
+	req := httptest.NewRequest(http.MethodPost, "/api/v1/providers/me", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = withProviderClaims(req, 2)
+	w := httptest.NewRecorder()
+
+	h.CreateMine()(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
 func TestProviderHandler_CreateMine_AlreadyExists(t *testing.T) {
 	svc := &mockServiceProviderService{
 		createFn: func(_ context.Context, _ int64, _ service.ServiceProviderInput) (*model.ServiceProvider, error) {
@@ -238,6 +258,26 @@ func TestProviderHandler_UpdateMine_NotFound(t *testing.T) {
 	h.UpdateMine()(w, req)
 	if w.Code != http.StatusNotFound {
 		t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
+	}
+}
+
+func TestProviderHandler_UpdateMine_InvalidEmail(t *testing.T) {
+	svc := &mockServiceProviderService{
+		updateMineFn: func(_ context.Context, _ int64, _ service.ServiceProviderInput) (*model.ServiceProvider, error) {
+			return nil, service.ErrInvalidEmail
+		},
+	}
+	h := NewServiceProviderHandler(svc)
+
+	body := `{"business_name":"test","email":"bad-email"}`
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/providers/me", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = withProviderClaims(req, 2)
+	w := httptest.NewRecorder()
+
+	h.UpdateMine()(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
 	}
 }
 
