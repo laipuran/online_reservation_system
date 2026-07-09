@@ -23,7 +23,6 @@ export function useCreateReview() {
     onSuccess: (_, vars) => {
       qc.invalidateQueries({ queryKey: ["my-reservations"] });
       qc.invalidateQueries({ queryKey: ["service-reviews"] });
-      qc.invalidateQueries({ queryKey: ["service-review-stats"] });
     },
   });
 }

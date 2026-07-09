@@ -23,6 +23,8 @@ const EMPTY_FIELDS: Fields = {
   logoUrl: "",
 };
 
+const PHONE_REGEX = /^1[3-9]\d{9}$/;
+
 function validateProviderFields(
   fields: Fields
 ): Partial<Record<keyof Fields, string>> {
@@ -31,6 +33,9 @@ function validateProviderFields(
   if (!fields.description.trim()) errors.description = "请输入商家简介";
   if (!fields.address.trim()) errors.address = "请输入地址";
   if (!fields.email.trim()) errors.email = "请输入联系邮箱";
+  if (fields.phone.trim() && !PHONE_REGEX.test(fields.phone.trim())) {
+    errors.phone = "手机号格式不正确";
+  }
   return errors;
 }
 
@@ -89,7 +94,7 @@ export default function CompleteProfile() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-2">完善商家信息</h1>
+      <h1 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">完善商家信息</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
         请填写商家资料以完成注册
       </p>

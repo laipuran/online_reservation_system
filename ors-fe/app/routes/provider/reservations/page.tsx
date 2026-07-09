@@ -69,10 +69,9 @@ export default function ProviderReservationsPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">预约 ID</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">用户 ID</th>
-                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">服务 ID</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">预约时间</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">服务名称</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">备注</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">状态</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">操作</th>
                 </tr>
@@ -83,11 +82,14 @@ export default function ProviderReservationsPage() {
                     key={r.id}
                     className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50"
                   >
-                    <td className="px-4 py-3 font-mono text-xs">{r.id}</td>
-                    <td className="px-4 py-3">{r.user_id}</td>
-                    <td className="px-4 py-3">{r.service_id}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       {new Date(r.start_time).toLocaleString("zh-CN")}
+                    </td>
+                    <td className="px-4 py-3 max-w-[200px] truncate">
+                      {r.service?.title ?? "未知服务"}
+                    </td>
+                    <td className="px-4 py-3 max-w-[150px] truncate text-gray-500 dark:text-gray-400">
+                      {r.note || "-"}
                     </td>
                     <td className="px-4 py-3">
                       <span

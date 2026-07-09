@@ -30,12 +30,17 @@ const EMPTY_FIELDS: Fields = {
   logoUrl: "",
 };
 
+const PHONE_REGEX = /^1[3-9]\d{9}$/;
+
 function validateProviderFields(fields: Fields): Partial<Record<keyof Fields, string>> {
   const errors: Partial<Record<keyof Fields, string>> = {};
   if (!fields.businessName.trim()) errors.businessName = "请输入商家名称";
   if (!fields.description.trim()) errors.description = "请输入商家简介";
   if (!fields.address.trim()) errors.address = "请输入地址";
   if (!fields.email.trim()) errors.email = "请输入联系邮箱";
+  if (fields.phone.trim() && !PHONE_REGEX.test(fields.phone.trim())) {
+    errors.phone = "手机号格式不正确";
+  }
   return errors;
 }
 
@@ -116,11 +121,7 @@ export default function Register() {
         await setInterestsMutation.mutateAsync(interestIds);
       }
 
-      if (role === "provider") {
-        navigate("/complete-profile", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -132,7 +133,7 @@ export default function Register() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-6">注册</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">注册</h1>
 
       {/* step indicator */}
       <div className="flex items-center justify-center gap-2 mb-6">

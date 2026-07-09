@@ -94,11 +94,14 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-3xl mx-auto mt-8 px-4 pb-12">
-      {/* CustomerCard */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
-          {user.name.charAt(0)}
-        </div>
+        {user.avatar_url ? (
+          <img src={user.avatar_url} alt={user.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
+            {user.name.charAt(0)}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{user.name}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">

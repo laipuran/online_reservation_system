@@ -43,36 +43,36 @@ export default function RegisterStepBasic({
   return (
     <div className="space-y-4" onKeyDown={handleKeyDown}>
       <div>
-        <label className="block text-sm font-medium mb-1">昵称</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">昵称</label>
         <input
           type="text"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="张三"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">邮箱</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">邮箱</label>
         <input
           type="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="your@email.com"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">密码</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">密码</label>
         <input
           type="password"
           value={password}
           onChange={(e) => onPasswordChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
         />
       </div>
       <div>
-        <label className="block text-sm font-medium mb-3">身份</label>
+        <label className="block text-sm font-medium mb-3 dark:text-gray-300">身份</label>
         <div className="space-y-2">
           {ROLE_OPTIONS.map((opt) => (
             <label

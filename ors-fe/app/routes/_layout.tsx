@@ -72,9 +72,13 @@ export default function Layout() {
                     {user.name}
                   </Link>
                   <NotificationBell />
-                  <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
-                    {user.name.charAt(0)}
-                  </div>
+                  {user.avatar_url ? (
+                    <img src={user.avatar_url} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-medium">
+                      {user.name.charAt(0)}
+                    </div>
+                  )}
                   <button
                     onClick={handleLogout}
                     className="text-sm text-red-500 hover:underline"

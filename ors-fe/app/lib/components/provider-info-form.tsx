@@ -19,6 +19,7 @@ interface Fields {
   description: string;
   address: string;
   email: string;
+  phone: string;
 }
 
 export default function ProviderInfoForm({
@@ -39,14 +40,14 @@ export default function ProviderInfoForm({
   return (
     <div className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">
           商家名称 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={businessName}
           onChange={(e) => onBusinessNameChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="舒心养生馆"
         />
         {errors.businessName && (
@@ -54,14 +55,14 @@ export default function ProviderInfoForm({
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">
           商家简介 <span className="text-red-500">*</span>
         </label>
         <textarea
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           rows={3}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 resize-none"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100 resize-none"
           placeholder="专业按摩服务，十余年经验..."
         />
         {errors.description && (
@@ -69,14 +70,14 @@ export default function ProviderInfoForm({
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">
           地址 <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
           value={address}
           onChange={(e) => onAddressChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="上海市徐汇区..."
         />
         {errors.address && (
@@ -84,14 +85,14 @@ export default function ProviderInfoForm({
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">
           联系邮箱 <span className="text-red-500">*</span>
         </label>
         <input
           type="email"
           value={email}
           onChange={(e) => onEmailChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="shop@example.com"
         />
         {errors.email && (
@@ -99,22 +100,25 @@ export default function ProviderInfoForm({
         )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">联系电话</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">联系电话</label>
         <input
           type="tel"
           value={phone}
           onChange={(e) => onPhoneChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="13800000000"
         />
+        {errors.phone && (
+          <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+        )}
       </div>
       <div>
-        <label className="block text-sm font-medium mb-1">Logo URL</label>
+        <label className="block text-sm font-medium mb-1 dark:text-gray-300">Logo URL</label>
         <input
           type="url"
           value={logoUrl}
           onChange={(e) => onLogoUrlChange(e.target.value)}
-          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="https://example.com/logo.png"
         />
       </div>
