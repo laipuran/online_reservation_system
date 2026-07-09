@@ -8,12 +8,6 @@ const TABS = [
   { label: "我的预约", to: "/dashboard" },
 ];
 
-const TABS = [
-  { label: "首页", to: "/" },
-  { label: "预约项目", to: "/services" },
-  { label: "我的预约", to: "/my-reservations" },
-];
-
 export default function Layout() {
   const { user, loading, clearAuth } = useAuth();
   const navigate = useNavigate();
