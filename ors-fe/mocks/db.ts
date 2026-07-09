@@ -636,7 +636,7 @@ export function seed() {
     tag_id: 1,
   });
 
-  /* ── Reservations（保留，引用的 service_id 1,2,6,9 未变） ── */
+  /* ── 13 条预约（覆盖 5 种状态） ───────────────────────── */
 
   db.reservation.create({
     id: 1001,
@@ -690,6 +690,94 @@ export function seed() {
     end_time: "2026-07-13T15:30:00Z",
     status: "pending",
     note: "最近腰疼",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1006,
+    user_id: 1,
+    service_id: 3,
+    start_time: "2026-07-05T10:00:00Z",
+    end_time: "2026-07-05T11:30:00Z",
+    status: "completed",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1007,
+    user_id: 1,
+    service_id: 4,
+    start_time: "2026-07-06T14:00:00Z",
+    end_time: "2026-07-06T15:00:00Z",
+    status: "completed",
+    note: "力道可以重一点",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1008,
+    user_id: 1,
+    service_id: 7,
+    start_time: "2026-07-07T09:00:00Z",
+    end_time: "2026-07-07T10:15:00Z",
+    status: "cancelled",
+    note: "临时有事",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1009,
+    user_id: 1,
+    service_id: 8,
+    start_time: "2026-07-04T16:00:00Z",
+    end_time: "2026-07-04T16:45:00Z",
+    status: "rejected",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1010,
+    user_id: 3,
+    service_id: 2,
+    start_time: "2026-07-03T10:00:00Z",
+    end_time: "2026-07-03T11:30:00Z",
+    status: "completed",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1011,
+    user_id: 3,
+    service_id: 11,
+    start_time: "2026-07-05T14:00:00Z",
+    end_time: "2026-07-05T15:00:00Z",
+    status: "completed",
+    note: "敏感肌，请用温和产品",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1012,
+    user_id: 3,
+    service_id: 12,
+    start_time: "2026-07-02T09:00:00Z",
+    end_time: "2026-07-02T10:15:00Z",
+    status: "cancelled",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1013,
+    user_id: 3,
+    service_id: 5,
+    start_time: "2026-07-01T10:00:00Z",
+    end_time: "2026-07-01T12:00:00Z",
+    status: "rejected",
+    note: "想换一个样式",
     created_at: now,
     updated_at: now,
   });
