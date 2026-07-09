@@ -94,6 +94,40 @@ export const db = factory({
 
 const now = "2026-07-08T00:00:00Z";
 
+function restoreFromStorage() {
+  try {
+    const raw = localStorage.getItem("ors-auth");
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    const user = parsed?.state?.user;
+    if (!user || !user.id) return;
+    const exists = db.user.findFirst({ where: { id: { equals: user.id } } });
+    if (!exists) {
+      db.user.create({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        password: "",
+        role: user.role,
+        phone: user.phone ?? "",
+        avatar_url: user.avatar_url ?? "",
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+      });
+    }
+    const providerRaw = localStorage.getItem("ors-provider");
+    if (providerRaw) {
+      const provider = JSON.parse(providerRaw);
+      const pExists = db.provider.findFirst({ where: { user_id: { equals: user.id } } });
+      if (!pExists) {
+        db.provider.create(provider);
+      }
+    }
+  } catch {
+    // localStorage unavailable or data malformed
+  }
+}
+
 export function seed() {
   if (db.user.count() > 0) return;
 
@@ -938,4 +972,6 @@ export function seed() {
     is_read: true,
     created_at: now,
   });
+
+  restoreFromStorage();
 }

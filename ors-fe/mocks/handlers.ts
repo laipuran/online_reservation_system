@@ -130,6 +130,7 @@ export const handlers = [
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     });
+    try { localStorage.setItem("ors-provider", JSON.stringify(p)); } catch {}
     return json(p, 201, "created");
   }),
 
@@ -151,6 +152,7 @@ export const handlers = [
         updated_at: new Date().toISOString(),
       },
     });
+    try { localStorage.setItem("ors-provider", JSON.stringify(updated)); } catch {}
     return json(updated);
   }),
 
