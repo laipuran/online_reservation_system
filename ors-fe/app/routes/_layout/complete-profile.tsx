@@ -56,7 +56,7 @@ export default function CompleteProfile() {
   if (loading || !user) {
     return (
       <div className="flex items-center justify-center mt-20">
-        <p className="text-gray-500">加载中...</p>
+        <p className="text-gray-500 dark:text-gray-400">加载中...</p>
       </div>
     );
   }
@@ -90,7 +90,7 @@ export default function CompleteProfile() {
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
       <h1 className="text-2xl font-bold text-center mb-2">完善商家信息</h1>
-      <p className="text-sm text-gray-500 text-center mb-6">
+      <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
         请填写商家资料以完成注册
       </p>
 

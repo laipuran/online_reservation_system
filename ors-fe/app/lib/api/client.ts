@@ -1,6 +1,8 @@
 import { useAuthStore } from "../stores/auth.store";
 
-const BASE_URL = "http://localhost:8080/api/v1";
+const BASE_URL = import.meta.env.SSR
+  ? (process.env.API_BASE_URL ?? "http://localhost:8080/api/v1")
+  : "/api/v1";
 
 export interface ApiResponse<T = unknown> {
   code: number;

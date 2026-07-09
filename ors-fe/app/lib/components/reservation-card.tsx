@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
+import { STATUS_CONFIG } from "../status";
 import type { ReservationStatus } from "../api/reservations";
 
 interface ReservationCardProps {
@@ -17,14 +18,6 @@ interface ReservationCardProps {
   isReviewing?: boolean;
   reviewed?: boolean;
 }
-
-const STATUS_CONFIG: Record<ReservationStatus, { label: string; className: string }> = {
-  pending:    { label: "待确认",  className: "bg-yellow-100 text-yellow-700" },
-  confirmed:  { label: "已确认",  className: "bg-green-100 text-green-700" },
-  completed:  { label: "已完成",  className: "bg-blue-100 text-blue-700" },
-  cancelled:  { label: "已取消",  className: "bg-gray-100 text-gray-500" },
-  rejected:   { label: "已拒绝",  className: "bg-red-100 text-red-700" },
-};
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -52,7 +45,7 @@ export function ReservationCard({
   isReviewing,
   reviewed,
 }: ReservationCardProps) {
-  const cfg = STATUS_CONFIG[status];
+  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const start = formatDate(startTime);
   const end = formatDate(endTime);
   const [rating, setRating] = useState(0);
@@ -99,7 +92,7 @@ export function ReservationCard({
 
         {note && (
           <p className="mt-2 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-            <span className="text-gray-400">备注：</span>{note}
+            <span className="text-gray-400 dark:text-gray-500">备注：</span>{note}
           </p>
         )}
 
@@ -108,7 +101,7 @@ export function ReservationCard({
             <button
               onClick={() => onCancel(id)}
               disabled={cancelPending}
-              className="text-xs text-red-500 border border-red-200 rounded px-2.5 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40 transition-colors"
+              className="text-xs text-red-500 border border-red-200 dark:border-red-800 rounded px-2.5 py-1 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-40 transition-colors"
             >
               取消预约
             </button>

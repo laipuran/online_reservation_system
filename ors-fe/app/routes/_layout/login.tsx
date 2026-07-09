@@ -24,8 +24,12 @@ export default function Login() {
     }
 
     try {
-      await loginMutation.mutateAsync({ email: email.trim(), password });
-      navigate("/dashboard");
+      const data = await loginMutation.mutateAsync({ email: email.trim(), password });
+      if (data.user.role === "provider") {
+        navigate("/provider/services", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -67,9 +71,9 @@ export default function Login() {
           {loginMutation.isPending ? "登录中..." : "登录"}
         </button>
       </form>
-      <p className="text-sm text-center mt-4 text-gray-500">
+      <p className="text-sm text-center mt-4 text-gray-500 dark:text-gray-400">
         还没有账号？{" "}
-        <Link to="/register" className="text-blue-600 hover:underline">
+        <Link to="/register" className="text-blue-600 dark:text-blue-400 hover:underline">
           注册
         </Link>
       </p>

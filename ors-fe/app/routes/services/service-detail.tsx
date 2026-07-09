@@ -3,9 +3,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
-import {
-  fetchServiceReviews,
-} from "../../lib/api/reviews";
+import { fetchServiceReviews } from "../../lib/api/reviews";
 import { useAuth } from "../../lib/hooks/use-auth";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {

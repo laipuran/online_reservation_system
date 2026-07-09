@@ -5,22 +5,7 @@ import {
   useRejectReservation,
 } from "../../../lib/hooks/use-provider-reservations";
 import type { ReservationStatus } from "../../../lib/api/reservations";
-
-const STATUS_LABEL: Record<ReservationStatus, string> = {
-  pending: "待确认",
-  confirmed: "已确认",
-  completed: "已完成",
-  cancelled: "已取消",
-  rejected: "已拒绝",
-};
-
-const STATUS_CLASS: Record<ReservationStatus, string> = {
-  pending: "bg-yellow-100 text-yellow-700",
-  confirmed: "bg-green-100 text-green-700",
-  completed: "bg-blue-100 text-blue-700",
-  cancelled: "bg-gray-100 text-gray-500",
-  rejected: "bg-red-100 text-red-700",
-};
+import { STATUS_CONFIG } from "../../../lib/status";
 
 const STATUS_FILTERS: Array<{ label: string; value: ReservationStatus | "" }> = [
   { label: "全部", value: "" },
@@ -72,11 +57,11 @@ export default function ProviderReservationsPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <p className="text-gray-400">加载中...</p>
+          <p className="text-gray-400 dark:text-gray-500">加载中...</p>
         </div>
       ) : reservations.length === 0 ? (
         <div className="flex justify-center py-20">
-          <p className="text-gray-400">暂无预约</p>
+          <p className="text-gray-400 dark:text-gray-500">暂无预约</p>
         </div>
       ) : (
         <>
@@ -107,10 +92,10 @@ export default function ProviderReservationsPage() {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block text-xs px-2 py-0.5 rounded ${
-                          STATUS_CLASS[r.status] ?? ""
+                          (STATUS_CONFIG[r.status] ?? STATUS_CONFIG.pending).className
                         }`}
                       >
-                        {STATUS_LABEL[r.status] ?? r.status}
+                        {(STATUS_CONFIG[r.status] ?? STATUS_CONFIG.pending).label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
@@ -119,7 +104,7 @@ export default function ProviderReservationsPage() {
                           <button
                             onClick={() => confirmMutation.mutate(r.id)}
                             disabled={confirmMutation.isPending}
-                            className="text-green-600 hover:underline text-xs disabled:opacity-40"
+                            className="text-green-600 dark:text-green-400 hover:underline text-xs disabled:opacity-40"
                           >
                             确认
                           </button>
@@ -148,7 +133,7 @@ export default function ProviderReservationsPage() {
               >
                 上一页
               </button>
-              <span className="text-sm text-gray-500">第 {page} 页</span>
+              <span className="text-sm text-gray-500 dark:text-gray-400">第 {page} 页</span>
               <button
                 onClick={() => setPage((p) => p + 1)}
                 disabled={!hasMore}

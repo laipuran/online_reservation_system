@@ -1,4 +1,6 @@
 import { Link } from "react-router";
+import { STATUS_CONFIG } from "../status";
+import type { ServiceStatus } from "../status";
 
 interface ServiceCardProps {
   id: number;
@@ -8,15 +10,8 @@ interface ServiceCardProps {
   durationMinutes: number;
   avgRating: number;
   imageUrl: string;
-  status: "active" | "inactive" | "pending" | "rejected";
+  status: ServiceStatus;
 }
-
-const STATUS_CONFIG = {
-  active: { label: "已上架", className: "bg-green-100 text-green-700" },
-  inactive: { label: "已下架", className: "bg-gray-100 text-gray-500" },
-  pending: { label: "待审核", className: "bg-yellow-100 text-yellow-700" },
-  rejected: { label: "已驳回", className: "bg-red-100 text-red-700" },
-} as const;
 
 export function ServiceCard({
   id,
@@ -28,14 +23,15 @@ export function ServiceCard({
   imageUrl,
   status,
 }: ServiceCardProps) {
-  const statusCfg = STATUS_CONFIG[status];
+  const statusCfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.active;
 
   return (
     <Link
       to={`/services/${id}`}
       className="flex flex-col rounded-xl border border-gray-200 bg-white
                  min-h-[260px] max-h-[380px] hover:shadow-md transition-shadow
-                 hover:border-gray-300 overflow-hidden"
+                 hover:border-gray-300 overflow-hidden
+                 dark:border-gray-700 dark:bg-gray-800 dark:hover:border-gray-600"
     >
       {imageUrl ? (
         <img
@@ -44,14 +40,14 @@ export function ServiceCard({
           className="w-full h-32 object-cover"
         />
       ) : (
-        <div className="w-full h-32 bg-gray-100 flex items-center justify-center">
-          <span className="text-gray-400 text-sm">{title}</span>
+        <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+          <span className="text-gray-400 dark:text-gray-500 text-sm">{title}</span>
         </div>
       )}
 
       <div className="flex flex-col flex-1 p-4 pt-3">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold text-base text-gray-900 leading-snug">
+          <h3 className="font-semibold text-base text-gray-900 dark:text-gray-100 leading-snug">
             {title}
           </h3>
           <span
@@ -61,7 +57,7 @@ export function ServiceCard({
           </span>
         </div>
 
-        <p className="text-sm text-gray-500 mt-1.5 line-clamp-2 leading-relaxed">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 line-clamp-2 leading-relaxed">
           {description}
         </p>
 

@@ -25,14 +25,14 @@ export default function InterestTagsPicker({ selectedIds, onChange }: Props) {
   }
 
   if (loading) {
-    return <p className="text-gray-500 text-sm">加载标签中...</p>;
+    return <p className="text-gray-500 dark:text-gray-400 text-sm">加载标签中...</p>;
   }
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-3">
-        选择你感兴趣的服务标签，方便我们为你推荐（可跳过）
-      </p>
+      <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+         选择你感兴趣的服务标签，方便我们为你推荐（可跳过）
+       </p>
       <div className="flex flex-wrap gap-2">
         {tags.map((tag) => {
           const selected = selectedIds.includes(tag.id);

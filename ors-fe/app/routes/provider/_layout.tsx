@@ -13,15 +13,19 @@ export default function ProviderLayout() {
   const location = useLocation();
 
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login", { replace: true });
+    if (!loading) {
+      if (!user) {
+        navigate("/login", { replace: true });
+      } else if (user.role !== "provider") {
+        navigate("/dashboard", { replace: true });
+      }
     }
   }, [user, loading, navigate]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center mt-20">
-        <p className="text-gray-500">加载中...</p>
+        <p className="text-gray-500 dark:text-gray-400">加载中...</p>
       </div>
     );
   }
