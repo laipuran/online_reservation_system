@@ -263,10 +263,10 @@ export default function ServiceDetail() {
                   <div key={review.id} className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        {review.user_name.charAt(0)}
+                        ユ
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{review.user_name}</p>
+                        <p className="text-sm font-medium text-gray-900">用户 #{review.user_id}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
                           <span className="text-xs text-gray-400">
@@ -275,7 +275,7 @@ export default function ServiceDetail() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 ml-11">{review.comment}</p>
+                    <p className="text-sm text-gray-600 ml-11">{review.comment || ""}</p>
                   </div>
                 ))}
                 {totalReviewPages > 1 && (

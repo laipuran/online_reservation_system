@@ -10,10 +10,9 @@ export interface ReviewItem {
   id: number;
   reservation_id: number;
   user_id: number;
-  user_name: string;
   service_id: number;
   rating: number;
-  comment: string;
+  comment?: string;
   created_at: string;
 }
 

@@ -1,7 +1,11 @@
 import { useState, useEffect, useMemo, type FormEvent } from "react";
 import { useParams, useNavigate, Link } from "react-router";
-import { useMyProvider, useProviderServices, useUpdateService } from "../../../lib/hooks/use-provider";
+import { useMyProvider, useProviderServices, useUpdateService, useReplaceServiceTags } from "../../../lib/hooks/use-provider";
 import { useCategories } from "../../../lib/hooks/use-categories";
+import { TagInput } from "../../../lib/components/tag-input";
+import { fetchServiceTags } from "../../../lib/api/services";
+import { createTag } from "../../../lib/api/tags";
+import type { Tag } from "../../../lib/api/tags";
 import { ApiError } from "../../../lib/api/client";
 
 export default function EditServicePage() {
@@ -37,7 +41,10 @@ export default function EditServicePage() {
   const [price, setPrice] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [error, setError] = useState("");
+
+  const replaceTagsMutation = useReplaceServiceTags();
 
   useEffect(() => {
     if (service) {
@@ -49,6 +56,14 @@ export default function EditServicePage() {
       setImageUrl(service.image_url ?? "");
     }
   }, [service]);
+
+  useEffect(() => {
+    if (serviceId) {
+      fetchServiceTags(serviceId).then((tags) => {
+        setSelectedTags(tags);
+      }).catch(() => {});
+    }
+  }, [serviceId]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -83,6 +98,20 @@ export default function EditServicePage() {
           image_url: imageUrl.trim() || undefined,
         },
       });
+
+      if (selectedTags.length > 0) {
+        const tagIds: number[] = [];
+        for (const tag of selectedTags) {
+          if (tag.id > 0) {
+            tagIds.push(tag.id);
+          } else {
+            const created = await createTag(tag.name);
+            tagIds.push(created.id);
+          }
+        }
+        await replaceTagsMutation.mutateAsync({ id: serviceId, tagIds });
+      }
+
       navigate("/provider/services");
     } catch (err) {
       if (err instanceof ApiError) {
@@ -214,6 +243,11 @@ export default function EditServicePage() {
             onChange={(e) => setImageUrl(e.target.value)}
             className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-sm"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">服务标签</label>
+          <TagInput selectedTags={selectedTags} onChange={setSelectedTags} />
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}

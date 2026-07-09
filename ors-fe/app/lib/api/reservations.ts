@@ -42,12 +42,6 @@ export interface ReservationListResponse {
   page_size: number;
 }
 
-export interface ReservationViewListResponse {
-  items: ReservationViewItem[];
-  page: number;
-  page_size: number;
-}
-
 export interface ReservationQueryParams {
   status?: ReservationStatus;
   page?: number;
@@ -71,8 +65,8 @@ export function fetchMyReservations(
 
 export function fetchReservationById(
   id: number
-): Promise<ReservationViewItem> {
-  return request<ReservationViewItem>(`/reservations/${id}`);
+): Promise<ReservationItem> {
+  return request<ReservationItem>(`/reservations/${id}`);
 }
 
 export interface CreateReservationInput {

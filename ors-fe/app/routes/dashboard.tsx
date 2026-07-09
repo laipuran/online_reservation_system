@@ -108,14 +108,22 @@ export default function Dashboard() {
             {ROLE_LABEL[user.role] ?? user.role} · 注册于 {joinedDate}
           </p>
         </div>
-        {user.role === "provider" && providerQuery.data && (
+        <div className="flex items-center gap-2">
           <Link
-            to="/provider/services"
-            className="shrink-0 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            to="/settings"
+            className="shrink-0 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            服务商控制台
+            设置
           </Link>
-        )}
+          {user.role === "provider" && providerQuery.data && (
+            <Link
+              to="/provider/services"
+              className="shrink-0 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            >
+              服务商控制台
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Status filter */}
