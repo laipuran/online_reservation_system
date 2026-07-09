@@ -458,7 +458,7 @@ sequenceDiagram
     FE->>BE: POST /api/v1/reservations<br/>{ serviceId, startTime, note }
     Note over BE: 校验 JWT Token，提取用户ID
 
-    BE->>DB: 检查该时段是否已被预约
+    BE->>DB: 检查同一服务下 pending/confirmed 预约是否存在时间段重叠
     DB-->>BE: 返回冲突检查结果
     alt 时段冲突
         BE-->>FE: 409 该时段已被预约

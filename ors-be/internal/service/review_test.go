@@ -92,6 +92,10 @@ func (m *mockReviewReservationRepo) ListByProviderID(ctx context.Context, provid
 	return nil, nil
 }
 
+func (m *mockReviewReservationRepo) HasTimeConflict(ctx context.Context, serviceID int64, startTime, endTime time.Time) (bool, error) {
+	return false, nil
+}
+
 func (m *mockReviewReservationRepo) UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error) {
 	return nil, nil
 }

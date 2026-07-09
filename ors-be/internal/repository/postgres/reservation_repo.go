@@ -114,6 +114,24 @@ func (r *reservationRepo) ListByProviderID(ctx context.Context, providerID int64
 	return scanReservations(rows)
 }
 
+func (r *reservationRepo) HasTimeConflict(ctx context.Context, serviceID int64, startTime, endTime time.Time) (bool, error) {
+	query := `
+		SELECT EXISTS (
+			SELECT 1
+			FROM reservations
+			WHERE service_id = $1
+				AND status IN ('pending', 'confirmed')
+				AND start_time < $3
+				AND end_time > $2
+		)`
+
+	var exists bool
+	if err := r.pool.QueryRow(ctx, query, serviceID, startTime, endTime).Scan(&exists); err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
 func (r *reservationRepo) UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error) {
 	query := `
 		UPDATE reservations

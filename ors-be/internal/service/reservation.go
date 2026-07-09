@@ -86,12 +86,21 @@ func (s *reservationService) Create(ctx context.Context, userID int64, input Res
 	if serviceItem == nil || serviceItem.Status != "active" {
 		return nil, ErrServiceNotFound
 	}
+	endTime := input.StartTime.Add(time.Duration(serviceItem.DurationMinutes) * time.Minute)
+
+	hasConflict, err := s.reservationRepo.HasTimeConflict(ctx, input.ServiceID, input.StartTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	if hasConflict {
+		return nil, repository.ErrReservationTimeConflict
+	}
 
 	reservation := &model.Reservation{
 		UserID:    userID,
 		ServiceID: input.ServiceID,
 		StartTime: input.StartTime,
-		EndTime:   input.StartTime.Add(time.Duration(serviceItem.DurationMinutes) * time.Minute),
+		EndTime:   endTime,
 		Status:    ReservationStatusPending,
 		Note:      strings.TrimSpace(input.Note),
 	}

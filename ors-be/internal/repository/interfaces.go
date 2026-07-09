@@ -64,6 +64,7 @@ type ReservationRepository interface {
 	GetByIDForProvider(ctx context.Context, id, providerID int64) (*model.Reservation, error)
 	ListByUserID(ctx context.Context, userID int64, status string, limit, offset int) ([]*model.Reservation, error)
 	ListByProviderID(ctx context.Context, providerID int64, status string, limit, offset int) ([]*model.Reservation, error)
+	HasTimeConflict(ctx context.Context, serviceID int64, startTime, endTime time.Time) (bool, error)
 	UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error)
 	CompleteDue(ctx context.Context, now time.Time) ([]*model.Reservation, error)
 }

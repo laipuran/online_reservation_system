@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"ors-be/internal/model"
+	"ors-be/internal/repository"
 )
 
 type mockReservationRepo struct {
@@ -14,6 +15,10 @@ type mockReservationRepo struct {
 	providerReservation *model.Reservation
 	listResult          []*model.Reservation
 	updatedStatus       string
+	conflictServiceID   int64
+	conflictStartTime   time.Time
+	conflictEndTime     time.Time
+	hasTimeConflict     bool
 	completedDueAt      time.Time
 	completedDueResult  []*model.Reservation
 	err                 error
@@ -103,6 +108,16 @@ func (m *mockReservationRepo) ListByProviderID(ctx context.Context, providerID i
 	return m.listResult, nil
 }
 
+func (m *mockReservationRepo) HasTimeConflict(ctx context.Context, serviceID int64, startTime, endTime time.Time) (bool, error) {
+	if m.err != nil {
+		return false, m.err
+	}
+	m.conflictServiceID = serviceID
+	m.conflictStartTime = startTime
+	m.conflictEndTime = endTime
+	return m.hasTimeConflict, nil
+}
+
 func (m *mockReservationRepo) UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error) {
 	if m.err != nil {
 		return nil, m.err
@@ -175,6 +190,15 @@ func TestReservationService_Create_Success(t *testing.T) {
 	if !reservation.EndTime.Equal(start.Add(time.Hour)) {
 		t.Errorf("Create() endTime = %s, want %s", reservation.EndTime, start.Add(time.Hour))
 	}
+	if repo.conflictServiceID != 2 {
+		t.Errorf("HasTimeConflict serviceID = %d, want 2", repo.conflictServiceID)
+	}
+	if !repo.conflictStartTime.Equal(start) {
+		t.Errorf("HasTimeConflict startTime = %s, want %s", repo.conflictStartTime, start)
+	}
+	if !repo.conflictEndTime.Equal(start.Add(time.Hour)) {
+		t.Errorf("HasTimeConflict endTime = %s, want %s", repo.conflictEndTime, start.Add(time.Hour))
+	}
 	if reservation.Note != "请准备热水" {
 		t.Errorf("Create() note = %q", reservation.Note)
 	}
@@ -187,6 +211,19 @@ func TestReservationService_Create_Success(t *testing.T) {
 	}
 	if notification.Type != NotificationTypeSystem {
 		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeSystem)
+	}
+}
+
+func TestReservationService_Create_TimeConflict(t *testing.T) {
+	repo := &mockReservationRepo{hasTimeConflict: true}
+	svc := newTestReservationService(repo)
+
+	_, err := svc.Create(context.Background(), 1, ReservationInput{
+		ServiceID: 2,
+		StartTime: time.Now().Add(24 * time.Hour),
+	})
+	if !errors.Is(err, repository.ErrReservationTimeConflict) {
+		t.Errorf("Create() error = %v, want %v", err, repository.ErrReservationTimeConflict)
 	}
 }
 
