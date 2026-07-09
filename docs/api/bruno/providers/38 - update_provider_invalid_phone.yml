@@ -1,0 +1,42 @@
+info:
+  name: update_provider_invalid_phone
+  type: http
+  seq: 38
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/providers/me
+  body:
+    type: json
+    data: |-
+      {
+        "business_name": "舒心养生馆",
+        "description": "更新后的商家简介",
+        "address": "上海市徐汇区",
+        "phone": "--",
+        "email": "new-shop@example.com",
+        "logo_url": "https://example.com/new-logo.png"
+      }
+  headers:
+    - name: Authorization
+      value: Bearer {{provider_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 400) {
+          throw new Error("update_provider_invalid_phone expected 400, got " + res.getStatus());
+        }
+        const body = res.getBody();
+        if (!body || body.message !== "电话号码格式不正确") {
+          throw new Error("unexpected invalid phone message: " + (body && body.message));
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -1,0 +1,76 @@
+info:
+  name: create_reservation_adjacent_time
+  type: http
+  seq: 42
+
+http:
+  method: POST
+  url: http://localhost:8080/api/v1/reservations
+  body:
+    type: json
+    data: |-
+      {
+        "service_id": 1,
+        "start_time": "2026-07-10T14:00:00Z",
+        "note": "相邻预约边界测试"
+      }
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const customerToken = bru.getVar("customer_token") || bru.getEnvVar("customer_token");
+        const serviceId = Number(bru.getVar("service_id") || bru.getEnvVar("service_id") || 1);
+        if (!customerToken) {
+          throw new Error("customer_token is required to create adjacent reservation");
+        }
+
+        const day = 24 * 60 * 60 * 1000;
+        const baseStart = new Date(Date.now() + 60 * day + Math.floor(Math.random() * 10 * day));
+        baseStart.setUTCSeconds(0, 0);
+
+        const createRes = await bru.sendRequest({
+          method: "POST",
+          url: "http://localhost:8080/api/v1/reservations",
+          headers: {
+            Authorization: "Bearer " + customerToken,
+            "Content-Type": "application/json"
+          },
+          data: {
+            service_id: serviceId,
+            start_time: baseStart.toISOString(),
+            note: "用于相邻时段边界测试的基准预约"
+          }
+        });
+        if (createRes.status !== 201) {
+          throw new Error("create base reservation expected 201, got " + createRes.status);
+        }
+
+        const data = createRes.data && createRes.data.data;
+        const body = req.getBody();
+        body.service_id = serviceId;
+        body.start_time = data.end_time;
+        req.setBody(body);
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 201) {
+          throw new Error("create_reservation_adjacent_time expected 201, got " + res.getStatus());
+        }
+        const body = res.getBody();
+        const reservationId = body && body.data && body.data.id;
+        if (!reservationId) {
+          throw new Error("adjacent reservation response missing reservation id");
+        }
+        bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
+        bru.setVar("reservation_id", String(reservationId));
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

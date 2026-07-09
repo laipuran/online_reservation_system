@@ -1,7 +1,7 @@
 info:
-  name: create_reservation
+  name: create_reservation_past_date
   type: http
-  seq: 18
+  seq: 39
 
 http:
   method: POST
@@ -12,7 +12,7 @@ http:
       {
         "service_id": 1,
         "start_time": "2026-07-10T14:00:00Z",
-        "note": "请准备热水"
+        "note": "过去日期边界测试"
       }
   headers:
     - name: Authorization
@@ -25,22 +25,20 @@ runtime:
     - type: before-request
       code: |-
         const serviceId = Number(bru.getVar("service_id") || bru.getEnvVar("service_id") || 1);
-        const day = 24 * 60 * 60 * 1000;
-        const randomOffset = Math.floor(Math.random() * 30 * day);
-        const start = new Date(Date.now() + 30 * day + randomOffset);
+        const start = new Date(Date.now() - 24 * 60 * 60 * 1000);
         start.setUTCSeconds(0, 0);
         const body = req.getBody();
         body.service_id = serviceId;
         body.start_time = start.toISOString();
         req.setBody(body);
-        bru.setVar("reservation_start_time", body.start_time);
     - type: after-response
       code: |-
+        if (res.getStatus() !== 400) {
+          throw new Error("create_reservation_past_date expected 400, got " + res.getStatus());
+        }
         const body = res.getBody();
-        const reservationId = body && body.data && body.data.id;
-        if (reservationId) {
-          bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
-          bru.setVar("reservation_id", String(reservationId));
+        if (!body || body.message !== "预约参数无效") {
+          throw new Error("unexpected reservation invalid input message: " + (body && body.message));
         }
 
 settings:
