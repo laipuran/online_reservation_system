@@ -14,6 +14,8 @@ type mockReservationRepo struct {
 	providerReservation *model.Reservation
 	listResult          []*model.Reservation
 	updatedStatus       string
+	completedDueAt      time.Time
+	completedDueCount   int64
 	err                 error
 }
 
@@ -114,6 +116,14 @@ func (m *mockReservationRepo) UpdateStatus(ctx context.Context, id int64, status
 		EndTime:   time.Now().Add(time.Hour),
 		Status:    status,
 	}, nil
+}
+
+func (m *mockReservationRepo) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+	if m.err != nil {
+		return 0, m.err
+	}
+	m.completedDueAt = now
+	return m.completedDueCount, nil
 }
 
 func newTestReservationService(repo *mockReservationRepo) ReservationService {
@@ -278,6 +288,23 @@ func TestReservationService_RejectForProvider_Success(t *testing.T) {
 	}
 	if notification.Type != NotificationTypeSystem {
 		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeSystem)
+	}
+}
+
+func TestReservationService_CompleteDue_Success(t *testing.T) {
+	now := time.Date(2026, 7, 10, 15, 0, 0, 0, time.UTC)
+	repo := &mockReservationRepo{completedDueCount: 3}
+	svc := newTestReservationService(repo)
+
+	count, err := svc.CompleteDue(context.Background(), now)
+	if err != nil {
+		t.Fatalf("CompleteDue() error = %v", err)
+	}
+	if count != 3 {
+		t.Errorf("CompleteDue() count = %d, want 3", count)
+	}
+	if !repo.completedDueAt.Equal(now) {
+		t.Errorf("CompleteDue() now = %s, want %s", repo.completedDueAt, now)
 	}
 }
 

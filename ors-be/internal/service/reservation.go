@@ -47,6 +47,7 @@ type ReservationService interface {
 	ListForProvider(ctx context.Context, userID int64, status string, page, pageSize int) (*ReservationListResult, error)
 	ConfirmForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error)
 	RejectForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error)
+	CompleteDue(ctx context.Context, now time.Time) (int64, error)
 }
 
 type reservationService struct {
@@ -204,6 +205,13 @@ func (s *reservationService) RejectForProvider(ctx context.Context, userID, id i
 		return nil, err
 	}
 	return updated, nil
+}
+
+func (s *reservationService) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+	if now.IsZero() {
+		now = time.Now()
+	}
+	return s.reservationRepo.CompleteDue(ctx, now)
 }
 
 func (s *reservationService) getForProviderUser(ctx context.Context, userID, id int64) (*model.Reservation, error) {
