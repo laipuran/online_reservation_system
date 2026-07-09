@@ -125,17 +125,21 @@ func (r *reservationRepo) UpdateStatus(ctx context.Context, id int64, status str
 	return scanReservation(r.pool.QueryRow(ctx, query, status, id))
 }
 
-func (r *reservationRepo) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+func (r *reservationRepo) CompleteDue(ctx context.Context, now time.Time) ([]*model.Reservation, error) {
 	query := `
 		UPDATE reservations
 		SET status = 'completed', updated_at = NOW()
-		WHERE status = 'confirmed' AND end_time <= $1`
+		WHERE status = 'confirmed' AND end_time <= $1
+		RETURNING id, user_id, service_id, start_time, end_time, status,
+			COALESCE(note, ''), created_at, updated_at`
 
-	tag, err := r.pool.Exec(ctx, query, now)
+	rows, err := r.pool.Query(ctx, query, now)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return tag.RowsAffected(), nil
+	defer rows.Close()
+
+	return scanReservations(rows)
 }
 
 func reservationSelectSQL() string {

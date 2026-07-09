@@ -15,7 +15,7 @@ type mockReservationRepo struct {
 	listResult          []*model.Reservation
 	updatedStatus       string
 	completedDueAt      time.Time
-	completedDueCount   int64
+	completedDueResult  []*model.Reservation
 	err                 error
 }
 
@@ -118,12 +118,12 @@ func (m *mockReservationRepo) UpdateStatus(ctx context.Context, id int64, status
 	}, nil
 }
 
-func (m *mockReservationRepo) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+func (m *mockReservationRepo) CompleteDue(ctx context.Context, now time.Time) ([]*model.Reservation, error) {
 	if m.err != nil {
-		return 0, m.err
+		return nil, m.err
 	}
 	m.completedDueAt = now
-	return m.completedDueCount, nil
+	return m.completedDueResult, nil
 }
 
 func newTestReservationService(repo *mockReservationRepo) ReservationService {
@@ -155,7 +155,7 @@ func newTestReservationServiceWithNotifications(repo *mockReservationRepo) (Rese
 
 func TestReservationService_Create_Success(t *testing.T) {
 	repo := &mockReservationRepo{}
-	svc := newTestReservationService(repo)
+	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
 	start := time.Date(2026, 7, 10, 14, 0, 0, 0, time.UTC)
 
 	reservation, err := svc.Create(context.Background(), 1, ReservationInput{
@@ -177,6 +177,16 @@ func TestReservationService_Create_Success(t *testing.T) {
 	}
 	if reservation.Note != "请准备热水" {
 		t.Errorf("Create() note = %q", reservation.Note)
+	}
+	if len(notificationSvc.notifications) != 1 {
+		t.Fatalf("notifications count = %d, want 1", len(notificationSvc.notifications))
+	}
+	notification := notificationSvc.notifications[0]
+	if notification.UserID != 20 {
+		t.Errorf("notification userID = %d, want provider user 20", notification.UserID)
+	}
+	if notification.Type != NotificationTypeSystem {
+		t.Errorf("notification type = %s, want %s", notification.Type, NotificationTypeSystem)
 	}
 }
 
@@ -293,8 +303,14 @@ func TestReservationService_RejectForProvider_Success(t *testing.T) {
 
 func TestReservationService_CompleteDue_Success(t *testing.T) {
 	now := time.Date(2026, 7, 10, 15, 0, 0, 0, time.UTC)
-	repo := &mockReservationRepo{completedDueCount: 3}
-	svc := newTestReservationService(repo)
+	repo := &mockReservationRepo{
+		completedDueResult: []*model.Reservation{
+			{ID: 1, UserID: 1, ServiceID: 2, Status: ReservationStatusCompleted},
+			{ID: 2, UserID: 2, ServiceID: 2, Status: ReservationStatusCompleted},
+			{ID: 3, UserID: 3, ServiceID: 2, Status: ReservationStatusCompleted},
+		},
+	}
+	svc, notificationSvc := newTestReservationServiceWithNotifications(repo)
 
 	count, err := svc.CompleteDue(context.Background(), now)
 	if err != nil {
@@ -305,6 +321,17 @@ func TestReservationService_CompleteDue_Success(t *testing.T) {
 	}
 	if !repo.completedDueAt.Equal(now) {
 		t.Errorf("CompleteDue() now = %s, want %s", repo.completedDueAt, now)
+	}
+	if len(notificationSvc.notifications) != 3 {
+		t.Fatalf("notifications count = %d, want 3", len(notificationSvc.notifications))
+	}
+	for i, notification := range notificationSvc.notifications {
+		if notification.UserID != 20 {
+			t.Errorf("notification[%d] userID = %d, want provider user 20", i, notification.UserID)
+		}
+		if notification.Type != NotificationTypeSystem {
+			t.Errorf("notification[%d] type = %s, want %s", i, notification.Type, NotificationTypeSystem)
+		}
 	}
 }
 

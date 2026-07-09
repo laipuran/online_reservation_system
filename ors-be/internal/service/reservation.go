@@ -96,6 +96,9 @@ func (s *reservationService) Create(ctx context.Context, userID int64, input Res
 	if err := s.reservationRepo.Create(ctx, reservation); err != nil {
 		return nil, err
 	}
+	if err := s.notifyProviderReservationCreated(ctx, reservation); err != nil {
+		return nil, err
+	}
 
 	serviceView, err := s.serviceRepo.GetViewByID(ctx, input.ServiceID)
 	if err != nil {
@@ -211,7 +214,16 @@ func (s *reservationService) CompleteDue(ctx context.Context, now time.Time) (in
 	if now.IsZero() {
 		now = time.Now()
 	}
-	return s.reservationRepo.CompleteDue(ctx, now)
+	completed, err := s.reservationRepo.CompleteDue(ctx, now)
+	if err != nil {
+		return 0, err
+	}
+	for _, reservation := range completed {
+		if err := s.notifyProviderReservationCompleted(ctx, reservation); err != nil {
+			return 0, err
+		}
+	}
+	return int64(len(completed)), nil
 }
 
 func (s *reservationService) getForProviderUser(ctx context.Context, userID, id int64) (*model.Reservation, error) {
@@ -244,7 +256,19 @@ func (s *reservationService) updateStatus(ctx context.Context, id int64, status 
 	return reservation, nil
 }
 
+func (s *reservationService) notifyProviderReservationCreated(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "收到新预约", "用户提交了新的预约，请及时处理。", NotificationTypeSystem)
+}
+
 func (s *reservationService) notifyProviderReservationCancelled(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "预约已取消", "用户已取消预约。", NotificationTypeReservationCancelled)
+}
+
+func (s *reservationService) notifyProviderReservationCompleted(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "预约已完成", "预约服务已完成。", NotificationTypeSystem)
+}
+
+func (s *reservationService) notifyProviderReservation(ctx context.Context, reservation *model.Reservation, title, content, notificationType string) error {
 	serviceItem, err := s.serviceRepo.GetByID(ctx, reservation.ServiceID)
 	if err != nil {
 		return err
@@ -261,7 +285,7 @@ func (s *reservationService) notifyProviderReservationCancelled(ctx context.Cont
 		return ErrProviderNotFound
 	}
 
-	return s.createReservationNotification(ctx, provider.UserID, "预约已取消", "用户已取消预约。", NotificationTypeReservationCancelled)
+	return s.createReservationNotification(ctx, provider.UserID, title, content, notificationType)
 }
 
 func (s *reservationService) createReservationNotification(ctx context.Context, userID int64, title, content, notificationType string) error {

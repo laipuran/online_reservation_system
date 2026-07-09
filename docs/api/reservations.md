@@ -12,11 +12,11 @@
 | `cancelled` | 用户取消预约，仅允许从 `pending` 或 `confirmed` 取消 |
 | `rejected` | 服务提供者拒绝预约，仅允许从 `pending` 拒绝 |
 
-后端服务启动后会每分钟扫描一次到期预约，并在启动时立即扫描一次。自动完成不会处理 `pending`、`cancelled` 或 `rejected` 状态的预约。
+后端服务启动后会每分钟扫描一次到期预约，并在启动时立即扫描一次。自动完成不会处理 `pending`、`cancelled` 或 `rejected` 状态的预约。用户创建预约、用户取消预约、预约自动完成时，会为对应服务提供者创建站内通知。
 
 ## POST /api/v1/reservations
 
-创建预约。服务端根据服务时长计算 `end_time`，初始状态为 `pending`。
+创建预约。服务端根据服务时长计算 `end_time`，初始状态为 `pending`，并向对应服务提供者发送站内通知。
 
 ### 认证
 
@@ -220,7 +220,7 @@ curl -s http://localhost:8080/api/v1/reservations/1001 \
 
 ## PUT /api/v1/reservations/{id}/cancel
 
-取消当前登录用户的预约。只允许取消 `pending` 或 `confirmed` 状态的预约。
+取消当前登录用户的预约。只允许取消 `pending` 或 `confirmed` 状态的预约，取消成功后会向对应服务提供者发送站内通知。
 
 ### 认证
 

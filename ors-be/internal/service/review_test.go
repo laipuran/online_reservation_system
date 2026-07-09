@@ -96,8 +96,8 @@ func (m *mockReviewReservationRepo) UpdateStatus(ctx context.Context, id int64, 
 	return nil, nil
 }
 
-func (m *mockReviewReservationRepo) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
-	return 0, nil
+func (m *mockReviewReservationRepo) CompleteDue(ctx context.Context, now time.Time) ([]*model.Reservation, error) {
+	return nil, nil
 }
 
 func TestReviewService_ListByService_Success(t *testing.T) {
