@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/hooks/use-auth";
 import { fetchMyProvider } from "../lib/api/providers";
 import { useMyReservations, useCancelReservation } from "../lib/hooks/use-reservations";
+import { useCreateReview } from "../lib/hooks/use-reviews";
 import { ReservationCard } from "../lib/components/reservation-card";
 import type { ReservationStatus } from "../lib/api/reservations";
 
@@ -37,6 +38,8 @@ export default function Dashboard() {
 
   const { data: reservationsData, isLoading: reservationsLoading } = useMyReservations(params);
   const cancelMutation = useCancelReservation();
+  const reviewMutation = useCreateReview();
+  const [reviewedIds, setReviewedIds] = useState<number[]>([]);
 
   const reservations = reservationsData?.items ?? [];
   const hasMore = (reservationsData?.items?.length ?? 0) >= pageSize;
@@ -156,6 +159,16 @@ export default function Dashboard() {
               note={r.note}
               onCancel={(id) => cancelMutation.mutate(id)}
               cancelPending={cancelMutation.isPending}
+              onReview={(id, rating, comment) =>
+                reviewMutation.mutate(
+                  { reservation_id: id, rating, comment },
+                  {
+                    onSuccess: () => setReviewedIds((prev) => [...prev, id]),
+                  }
+                )
+              }
+              isReviewing={reviewMutation.isPending}
+              reviewed={reviewedIds.includes(r.id)}
             />
           ))
         )}

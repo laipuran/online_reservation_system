@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router";
 import { STATUS_CONFIG } from "../status";
 import type { ReservationStatus } from "../api/reservations";
@@ -13,6 +14,9 @@ interface ReservationCardProps {
   note?: string;
   onCancel?: (id: number) => void;
   cancelPending?: boolean;
+  onReview?: (reservationId: number, rating: number, comment: string) => void;
+  isReviewing?: boolean;
+  reviewed?: boolean;
 }
 
 function formatDate(iso: string) {
@@ -37,10 +41,28 @@ export function ReservationCard({
   note,
   onCancel,
   cancelPending,
+  onReview,
+  isReviewing,
+  reviewed,
 }: ReservationCardProps) {
   const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.pending;
   const start = formatDate(startTime);
   const end = formatDate(endTime);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [showForm, setShowForm] = useState(false);
+
+  const handleSubmit = () => {
+    if (rating === 0 || !comment.trim()) return;
+    onReview?.(id, rating, comment.trim());
+    setShowForm(false);
+  };
+
+  const handleCancel = () => {
+    setShowForm(false);
+    setRating(0);
+    setComment("");
+  };
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800 hover:shadow-md transition-shadow overflow-hidden">
@@ -84,7 +106,63 @@ export function ReservationCard({
               取消预约
             </button>
           )}
+          {status === "completed" && onReview && !reviewed && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="text-xs text-blue-600 border border-blue-200 rounded px-2.5 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            >
+              {showForm ? "取消评价" : "评价"}
+            </button>
+          )}
+          {reviewed && status === "completed" && (
+            <span className="text-xs text-gray-400">已评价</span>
+          )}
         </div>
+
+        {showForm && (
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 space-y-3">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">撰写评价</p>
+            <div className="flex items-center gap-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setRating(star)}
+                  className={`text-2xl transition-colors ${
+                    star <= rating ? "text-amber-400" : "text-gray-200 dark:text-gray-600"
+                  } hover:text-amber-300`}
+                >
+                  ★
+                </button>
+              ))}
+              <span className="text-sm text-gray-400 ml-2">
+                {rating > 0 ? `${rating} 分` : "点击星星评分"}
+              </span>
+            </div>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="分享您的体验..."
+              rows={3}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800"
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={handleSubmit}
+                disabled={rating === 0 || !comment.trim() || isReviewing}
+                className="text-sm bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-40 transition-colors"
+              >
+                {isReviewing ? "提交中..." : "提交评价"}
+              </button>
+              <button
+                onClick={handleCancel}
+                className="text-sm text-gray-500 border border-gray-300 dark:border-gray-600 px-4 py-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

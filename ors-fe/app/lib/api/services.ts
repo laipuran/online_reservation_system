@@ -1,4 +1,5 @@
 import { request } from "./client";
+import type { Tag } from "./tags";
 
 export type ServiceStatus = "active" | "inactive" | "pending" | "rejected";
 
@@ -105,6 +106,10 @@ export function updateServiceStatus(
     method: "PATCH",
     body: JSON.stringify({ status }),
   });
+}
+
+export function fetchServiceTags(id: number): Promise<Tag[]> {
+  return request<Tag[]>(`/services/${id}/tags`);
 }
 
 export function fetchProviderServices(
