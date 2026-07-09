@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
-import { createReservation } from "../../lib/api/reservations";
 import {
   fetchServiceReviews,
   fetchServiceReviewStats,
@@ -130,20 +129,6 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
-  const bookingMutation = useMutation({
-    mutationFn: () => {
-      const startTime = `${bookDate}T${bookTime}:00`;
-      return createReservation({ service_id: serviceId, start_time: startTime, note: note || undefined });
-    },
-    onSuccess: () => {
-      alert("预约成功！");
-      navigate("/dashboard");
-    },
-    onError: (err: Error) => {
-      alert(err.message || "预约失败，请重试");
-    },
-  });
-
   if (serviceLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -179,7 +164,9 @@ export default function ServiceDetail() {
       alert("请选择预约日期和时间");
       return;
     }
-    bookingMutation.mutate();
+    const params = new URLSearchParams({ date: bookDate, time: bookTime });
+    if (note) params.set("note", note);
+    navigate(`/services/${serviceId}/confirm?${params.toString()}`);
   };
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -380,10 +367,9 @@ export default function ServiceDetail() {
 
               <button
                 onClick={handleBooking}
-                disabled={bookingMutation.isPending}
-                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold py-2.5 rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all"
               >
-                {bookingMutation.isPending ? "提交中..." : "立即预约"}
+                立即预约
               </button>
             </div>
 
