@@ -348,7 +348,7 @@ export const handlers = [
     if (!userId) return err("缺少认证信息", 401);
     const body: any = await request.json();
     const { reservation_id, rating, comment } = body;
-    if (!reservation_id || !rating || !comment) return err("参数不完整", 400);
+    if (!reservation_id || !rating) return err("参数不完整", 400);
     if (rating < 1 || rating > 5) return err("评分必须在 1-5 之间", 400);
 
     const res = db.reservation.findFirst({ where: { id: { equals: reservation_id } } });
@@ -396,8 +396,7 @@ export const handlers = [
       });
     }
 
-    const u = db.user.findFirst({ where: { id: { equals: userId } } });
-    return json({ ...review, user_name: u?.name ?? "匿名用户" }, 201, "created");
+    return json(review, 201, "created");
   }),
 
   http.get(`${API}/services/:id/reviews`, ({ params, request }) => {
@@ -408,33 +407,9 @@ export const handlers = [
     const { page, pageSize, offset } = pageParams(url);
 
     let list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
-    const total = list.length;
     list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    const items = list.slice(offset, offset + pageSize).map((r) => {
-      const u = db.user.findFirst({ where: { id: { equals: r.user_id } } });
-      return {
-        ...r,
-        user_name: u?.name ?? "匿名用户",
-      };
-    });
-    return json({ items, total, page, page_size: pageSize });
-  }),
-
-  http.get(`${API}/services/:id/reviews/stats`, ({ params }) => {
-    const serviceId = Number(params.id);
-    const s = db.service.findFirst({ where: { id: { equals: serviceId } } });
-    if (!s) return err("服务不存在", 404);
-    const list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
-    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    for (const r of list) {
-      distribution[r.rating] = (distribution[r.rating] ?? 0) + 1;
-    }
-    const total = list.length;
-    const avg =
-      total > 0
-        ? list.reduce((sum, r) => sum + r.rating, 0) / total
-        : s.avg_rating;
-    return json({ avg_rating: avg, total, distribution });
+    const items = list.slice(offset, offset + pageSize);
+    return json({ items, page, page_size: pageSize });
   }),
 
   /* ── Reservations (provider) ────────────────────────────── */
@@ -559,18 +534,8 @@ export const handlers = [
     let list = db.reservation.findMany({ where: { user_id: { equals: userId } } });
     if (status) list = list.filter((r) => r.status === status);
     list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    const items = list.map((r) => {
-      const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
-      const p = svc ? db.provider.findFirst({ where: { id: { equals: svc.provider_id } } }) : null;
-      return {
-        ...r,
-        service: svc
-          ? { id: svc.id, title: svc.title, provider: { id: p?.id ?? 0, business_name: p?.business_name ?? "" } }
-          : null,
-      };
-    });
-    const sliced = items.slice(offset, offset + pageSize);
-    return json({ items: sliced, page, page_size: pageSize });
+    const items = list.slice(offset, offset + pageSize);
+    return json({ items, page, page_size: pageSize });
   }),
 
   http.get(`${API}/reservations/:id`, ({ params, request }) => {

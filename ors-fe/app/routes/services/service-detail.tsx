@@ -5,7 +5,6 @@ import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
 import {
   fetchServiceReviews,
-  fetchServiceReviewStats,
 } from "../../lib/api/reviews";
 import { useAuth } from "../../lib/hooks/use-auth";
 
@@ -21,30 +20,6 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
     <span className={`text-amber-400 ${sizes[size]} tracking-tight`}>
       {stars.join("")}
     </span>
-  );
-}
-
-function ReviewStatsBar({ distribution, total }: { distribution: Record<number, number>; total: number }) {
-  const labels = [5, 4, 3, 2, 1];
-  return (
-    <div className="space-y-1.5">
-      {labels.map((star) => {
-        const count = distribution[star] ?? 0;
-        const pct = total > 0 ? (count / total) * 100 : 0;
-        return (
-          <div key={star} className="flex items-center gap-2 text-sm">
-            <span className="text-gray-600 w-6 text-right">{star}星</span>
-            <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-gray-400 w-8 text-xs text-right">{count}</span>
-          </div>
-        );
-      })}
-    </div>
   );
 }
 
@@ -117,15 +92,10 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
+  const REVIEW_PAGE_SIZE = 5;
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
-    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: 5 }],
-    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: 5 }),
-    enabled: !!serviceId,
-  });
-
-  const { data: reviewStats } = useQuery({
-    queryKey: ["service-review-stats", serviceId],
-    queryFn: () => fetchServiceReviewStats(serviceId),
+    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }],
+    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }),
     enabled: !!serviceId,
   });
 
@@ -150,10 +120,9 @@ export default function ServiceDetail() {
     );
   }
 
-  const reviews = reviewsData?.items ?? [];
-  const reviewsTotal = reviewsData?.total ?? 0;
-  const reviewsPageSize = 5;
-  const totalReviewPages = Math.max(1, Math.ceil(reviewsTotal / reviewsPageSize));
+  const allReviews = reviewsData?.items ?? [];
+  const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
+  const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
 
   const handleBooking = () => {
     if (!token) {
@@ -257,19 +226,6 @@ export default function ServiceDetail() {
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">用户评价</h3>
-            {reviewStats && (
-              <div className="flex gap-8 mb-6 p-4 bg-gray-50 rounded-xl">
-                <div className="text-center shrink-0">
-                  <p className="text-4xl font-bold text-gray-900">{reviewStats.avg_rating.toFixed(1)}</p>
-                  <StarRating rating={reviewStats.avg_rating} size="sm" />
-                  <p className="text-xs text-gray-400 mt-1">{reviewStats.total} 条评价</p>
-                </div>
-                <div className="flex-1">
-                  <ReviewStatsBar distribution={reviewStats.distribution} total={reviewStats.total} />
-                </div>
-              </div>
-            )}
-
             {reviewsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -284,10 +240,10 @@ export default function ServiceDetail() {
                   <div key={review.id} className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        {review.user_name.charAt(0)}
+                        U
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{review.user_name}</p>
+                        <p className="text-sm font-medium text-gray-900">用户 {review.user_id}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
                           <span className="text-xs text-gray-400">
@@ -299,7 +255,7 @@ export default function ServiceDetail() {
                     <p className="text-sm text-gray-600 ml-11">{review.comment}</p>
                   </div>
                 ))}
-                {totalReviewPages > 1 && (
+                {allReviews.length > 0 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button
                       onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
@@ -308,12 +264,10 @@ export default function ServiceDetail() {
                     >
                       上一页
                     </button>
-                    <span className="text-sm text-gray-400">
-                      {reviewPage} / {totalReviewPages}
-                    </span>
+                    <span className="text-sm text-gray-400">第 {reviewPage} 页</span>
                     <button
-                      onClick={() => setReviewPage((p) => Math.min(totalReviewPages, p + 1))}
-                      disabled={reviewPage >= totalReviewPages}
+                      onClick={() => setReviewPage((p) => p + 1)}
+                      disabled={!hasMoreReviews}
                       className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
                     >
                       下一页

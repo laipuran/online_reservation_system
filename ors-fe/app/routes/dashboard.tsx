@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../lib/hooks/use-auth";
 import { fetchMyProvider } from "../lib/api/providers";
+import { fetchServices, type ServiceItem } from "../lib/api/services";
 import { useMyReservations, useCancelReservation } from "../lib/hooks/use-reservations";
 import { useCreateReview } from "../lib/hooks/use-reviews";
 import { ReservationCard } from "../lib/components/reservation-card";
@@ -41,7 +42,23 @@ export default function Dashboard() {
   const reviewMutation = useCreateReview();
   const [reviewedIds, setReviewedIds] = useState<number[]>([]);
 
-  const reservations = reservationsData?.items ?? [];
+  const { data: allServicesData } = useQuery({
+    queryKey: ["services", { page_size: 50 }],
+    queryFn: () => fetchServices({ page_size: 50 }),
+  });
+
+  const serviceMap = new Map<number, ServiceItem>();
+  for (const s of allServicesData?.items ?? []) {
+    serviceMap.set(s.id, s);
+  }
+
+  const reservations = (reservationsData?.items ?? []).map((r) => {
+    const svc = serviceMap.get(r.service_id);
+    return {
+      ...r,
+      service: svc ? { id: svc.id, title: svc.title, provider: { id: svc.provider.id, business_name: svc.provider.business_name } } : null,
+    };
+  });
   const hasMore = (reservationsData?.items?.length ?? 0) >= pageSize;
 
   const providerQuery = useQuery({
@@ -150,9 +167,9 @@ export default function Dashboard() {
             <ReservationCard
               key={r.id}
               id={r.id}
-              serviceTitle={r.service.title}
-              serviceId={r.service.id}
-              providerName={r.service.provider.business_name}
+              serviceTitle={r.service?.title ?? `服务 #${r.service_id}`}
+              serviceId={r.service?.id ?? r.service_id}
+              providerName={r.service?.provider.business_name ?? "未知商家"}
               startTime={r.start_time}
               endTime={r.end_time}
               status={r.status}

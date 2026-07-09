@@ -1,22 +1,15 @@
 import { request } from "./client";
 
-export interface ReviewStats {
-  avg_rating: number;
-  total: number;
-  distribution: Record<number, number>;
-}
-
 export interface CreateReviewInput {
   reservation_id: number;
   rating: number;
-  comment: string;
+  comment?: string;
 }
 
 export interface ReviewItem {
   id: number;
   reservation_id: number;
   user_id: number;
-  user_name: string;
   service_id: number;
   rating: number;
   comment: string;
@@ -25,15 +18,8 @@ export interface ReviewItem {
 
 export interface ReviewListResponse {
   items: ReviewItem[];
-  total: number;
   page: number;
   page_size: number;
-}
-
-export function fetchServiceReviewStats(
-  serviceId: number
-): Promise<ReviewStats> {
-  return request<ReviewStats>(`/services/${serviceId}/reviews/stats`);
 }
 
 export function createReview(data: CreateReviewInput): Promise<ReviewItem> {

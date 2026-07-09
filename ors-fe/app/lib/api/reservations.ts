@@ -58,13 +58,13 @@ export interface ReservationQueryParams {
 
 export function fetchMyReservations(
   params: ReservationQueryParams = {}
-): Promise<ReservationViewListResponse> {
+): Promise<ReservationListResponse> {
   const query = new URLSearchParams();
   if (params.status) query.set("status", params.status);
   if (params.page) query.set("page", String(params.page));
   if (params.page_size) query.set("page_size", String(params.page_size));
   const qs = query.toString();
-  return request<ReservationViewListResponse>(
+  return request<ReservationListResponse>(
     `/reservations${qs ? `?${qs}` : ""}`
   );
 }
