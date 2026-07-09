@@ -405,9 +405,20 @@ export const handlers = [
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "confirmed", updated_at: new Date().toISOString() },
+    });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: r.user_id,
+      title: "预约已确认",
+      content: `您预约的「${svc?.title ?? "服务"}」已由商家确认，请按时到达。`,
+      type: "reservation_confirmed",
+      is_read: false,
+      created_at: new Date().toISOString(),
     });
     return json(updated);
   }),
@@ -416,9 +427,20 @@ export const handlers = [
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "rejected", updated_at: new Date().toISOString() },
+    });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: r.user_id,
+      title: "预约已拒绝",
+      content: `您预约的「${svc?.title ?? "服务"}」已被商家拒绝，请查看其他服务。`,
+      type: "system",
+      is_read: false,
+      created_at: new Date().toISOString(),
     });
     return json(updated);
   }),
@@ -446,6 +468,16 @@ export const handlers = [
       updated_at: now,
     });
     const p = db.provider.findFirst({ where: { id: { equals: svc.provider_id } } });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: userId,
+      title: "预约已创建",
+      content: `您已成功预约「${svc.title}」，请耐心等待商家确认。`,
+      type: "system",
+      is_read: false,
+      created_at: now,
+    });
     return json({
       id: r.id,
       service: {
