@@ -5,14 +5,25 @@ info:
 
 http:
   method: PUT
-  url: http://localhost:8080/api/v1/services/1/tags
+  url: http://localhost:8080/api/v1/services/{{service_id}}/tags
+  headers:
+    - name: Authorization
+      value: Bearer {{provider_token}}
   body:
     type: json
     data: |-
       {
-        "tag_ids": [1, 2, 3]
+        "tag_ids": [1]
       }
-  auth: inherit
+
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        const tagId = Number(bru.getVar("tag_id") || bru.getEnvVar("tag_id") || 1);
+        const body = req.getBody();
+        body.tag_ids = [tagId];
+        req.setBody(body);
 
 settings:
   encodeUrl: true

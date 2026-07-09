@@ -1,5 +1,19 @@
 # 预约模块
 
+## 状态流转
+
+预约状态由后端维护，当前规则如下：
+
+| 状态 | 说明 |
+|------|------|
+| `pending` | 用户创建预约后的初始状态，等待服务提供者确认 |
+| `confirmed` | 服务提供者确认预约，用户可按时到店 |
+| `completed` | 后台定时任务自动完成：仅当预约为 `confirmed` 且 `end_time <= now` 时更新 |
+| `cancelled` | 用户取消预约，仅允许从 `pending` 或 `confirmed` 取消 |
+| `rejected` | 服务提供者拒绝预约，仅允许从 `pending` 拒绝 |
+
+后端服务启动后会每分钟扫描一次到期预约，并在启动时立即扫描一次。自动完成不会处理 `pending`、`cancelled` 或 `rejected` 状态的预约。
+
 ## POST /api/v1/reservations
 
 创建预约。服务端根据服务时长计算 `end_time`，初始状态为 `pending`。
@@ -327,7 +341,7 @@ curl -s "http://localhost:8080/api/v1/provider/reservations?status=pending" \
 
 ## PUT /api/v1/provider/reservations/{id}/confirm
 
-服务提供者确认待确认预约。
+服务提供者确认待确认预约。预约确认后，当 `end_time <= now` 时会由后台定时任务自动更新为 `completed`，之后用户可以提交评价。
 
 ### 认证
 

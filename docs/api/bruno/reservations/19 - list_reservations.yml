@@ -6,7 +6,23 @@ info:
 http:
   method: GET
   url: "http://localhost:8080/api/v1/reservations?status=pending&page=1&page_size=20"
-  auth: inherit
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        const body = res.getBody();
+        const items = body && body.data && body.data.items;
+        const reservationId = items && items[0] && items[0].id;
+        if (reservationId) {
+          bru.setEnvVar("reservation_id", String(reservationId), { persist: true });
+          bru.setVar("reservation_id", String(reservationId));
+        }
 
 settings:
   encodeUrl: true

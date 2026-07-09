@@ -45,15 +45,17 @@ func main() {
 	reviewRepo := postgres.NewReviewRepo(pool)
 	notificationRepo := postgres.NewNotificationRepo(pool)
 	authSvc := service.NewAuthService(userRepo, hasher, tokenGen)
+	userSvc := service.NewUserService(userRepo, hasher)
 	providerSvc := service.NewServiceProviderService(providerRepo)
 	serviceSvc := service.NewServiceService(serviceRepo, providerRepo, tagRepo, serviceTagRepo)
 	tagSvc := service.NewTagService(tagRepo)
 	categorySvc := service.NewCategoryService(categoryRepo)
 	interestSvc := service.NewUserInterestService(tagRepo, interestRepo)
-	reservationSvc := service.NewReservationService(reservationRepo, serviceRepo, providerRepo)
-	reviewSvc := service.NewReviewService(reviewRepo, reservationRepo)
 	notificationSvc := service.NewNotificationService(notificationRepo)
+	reservationSvc := service.NewReservationService(reservationRepo, serviceRepo, providerRepo, notificationSvc)
+	reviewSvc := service.NewReviewService(reviewRepo, reservationRepo)
 	authH := handler.NewAuthHandler(authSvc)
+	userH := handler.NewUserHandler(userSvc)
 	providerH := handler.NewServiceProviderHandler(providerSvc)
 	serviceH := handler.NewServiceHandler(serviceSvc)
 	tagH := handler.NewTagHandler(tagSvc)
@@ -63,7 +65,7 @@ func main() {
 	reviewH := handler.NewReviewHandler(reviewSvc)
 	notificationH := handler.NewNotificationHandler(notificationSvc)
 
-	srv := httpsrv.NewServer(authH, providerH, serviceH, tagH, categoryH, interestH, reservationH, reviewH, notificationH, tokenGen, cfg.AllowedOrigins)
+	srv := httpsrv.NewServer(authH, userH, providerH, serviceH, tagH, categoryH, interestH, reservationH, reviewH, notificationH, tokenGen, cfg.AllowedOrigins)
 
 	httpServer := &http.Server{
 		Addr:         ":" + cfg.HTTPPort,
@@ -81,11 +83,16 @@ func main() {
 		}
 	}()
 
+	schedulerCtx, stopScheduler := context.WithCancel(context.Background())
+	defer stopScheduler()
+	startReservationCompletionScheduler(schedulerCtx, reservationSvc, time.Minute)
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	log.Println("正在关闭服务...")
+	stopScheduler()
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownCancel()
 
@@ -93,4 +100,36 @@ func main() {
 		log.Fatalf("服务关闭异常: %v", err)
 	}
 	log.Println("服务已关闭")
+}
+
+func startReservationCompletionScheduler(ctx context.Context, reservationSvc service.ReservationService, interval time.Duration) {
+	run := func() {
+		runCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+		defer cancel()
+
+		count, err := reservationSvc.CompleteDue(runCtx, time.Now())
+		if err != nil {
+			log.Printf("自动完成到期预约失败: %v", err)
+			return
+		}
+		if count > 0 {
+			log.Printf("自动完成到期预约数量: %d", count)
+		}
+	}
+
+	go func() {
+		run()
+
+		ticker := time.NewTicker(interval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				run()
+			}
+		}
+	}()
 }

@@ -6,6 +6,9 @@ info:
 http:
   method: POST
   url: http://localhost:8080/api/v1/providers/me
+  headers:
+    - name: Authorization
+      value: Bearer {{provider_token}}
   body:
     type: json
     data: |-
@@ -17,7 +20,6 @@ http:
         "email": "shop@example.com",
         "logo_url": "https://example.com/logo.png"
       }
-  auth: inherit
 
 settings:
   encodeUrl: true

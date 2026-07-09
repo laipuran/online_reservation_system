@@ -10,9 +10,10 @@ export default [
     index("routes/home.tsx"),
     route("login", "routes/_layout/login.tsx"),
     route("register", "routes/_layout/register.tsx"),
+    route("services", "routes/services/page.tsx"),
+    route("services/:id", "routes/services/service-detail.tsx"),
     route("dashboard", "routes/dashboard.tsx"),
     route("complete-profile", "routes/_layout/complete-profile.tsx"),
-    route("services/:id", "routes/services/service-detail.tsx"),
 
     layout("routes/provider/_layout.tsx", [
       route("provider/services", "routes/provider/services/page.tsx"),

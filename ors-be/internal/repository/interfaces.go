@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"ors-be/internal/model"
 )
@@ -13,6 +14,8 @@ type UserRepository interface {
 	Create(ctx context.Context, user *model.User) error
 	GetByEmail(ctx context.Context, email string) (*model.User, error)
 	GetByID(ctx context.Context, id int64) (*model.User, error)
+	Update(ctx context.Context, user *model.User) error
+	UpdatePassword(ctx context.Context, id int64, passwordHash string) error
 }
 
 type ServiceProviderRepository interface {
@@ -62,6 +65,7 @@ type ReservationRepository interface {
 	ListByUserID(ctx context.Context, userID int64, status string, limit, offset int) ([]*model.Reservation, error)
 	ListByProviderID(ctx context.Context, providerID int64, status string, limit, offset int) ([]*model.Reservation, error)
 	UpdateStatus(ctx context.Context, id int64, status string) (*model.Reservation, error)
+	CompleteDue(ctx context.Context, now time.Time) (int64, error)
 }
 
 type ReviewRepository interface {

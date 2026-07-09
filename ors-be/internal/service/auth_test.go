@@ -43,6 +43,26 @@ func (m *mockUserRepo) GetByID(ctx context.Context, id int64) (*model.User, erro
 	return nil, nil
 }
 
+func (m *mockUserRepo) Update(ctx context.Context, user *model.User) error {
+	for email, existing := range m.users {
+		if existing.ID == user.ID {
+			m.users[email] = user
+			return nil
+		}
+	}
+	return errors.New("user not found")
+}
+
+func (m *mockUserRepo) UpdatePassword(ctx context.Context, id int64, passwordHash string) error {
+	for _, user := range m.users {
+		if user.ID == id {
+			user.PasswordHash = passwordHash
+			return nil
+		}
+	}
+	return errors.New("user not found")
+}
+
 func newTestService() AuthService {
 	return NewAuthService(
 		newMockUserRepo(),
