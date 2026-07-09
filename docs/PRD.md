@@ -1369,6 +1369,8 @@ Response (200):
 | PUT | `/api/v1/provider/reservations/:id/reject` | 拒绝预约（Provider） | 是 |
 | GET | `/api/v1/provider/reservations` | 获取提供者的预约列表 | 是 |
 
+> 状态流转补充：预约创建后为 `pending`；服务提供者确认后为 `confirmed`；后端后台任务会在服务启动时和之后每分钟扫描一次，将 `confirmed` 且 `end_time <= now` 的预约自动更新为 `completed`；用户取消为 `cancelled`；服务提供者拒绝为 `rejected`。
+
 #### POST /api/v1/reservations
 
 Request:
