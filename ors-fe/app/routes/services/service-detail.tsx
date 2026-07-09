@@ -77,6 +77,7 @@ export default function ServiceDetail() {
   const [note, setNote] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [keyword, setKeyword] = useState("");
+  const [bookingError, setBookingError] = useState("");
 
   const { data: service, isLoading: serviceLoading } = useQuery({
     queryKey: ["service", serviceId],
@@ -123,14 +124,38 @@ export default function ServiceDetail() {
   const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
 
   const handleBooking = () => {
+    setBookingError("");
     if (!token) {
       navigate(`/login?redirect=/services/${serviceId}`);
       return;
     }
     if (!bookDate || !bookTime) {
-      alert("请选择预约日期和时间");
+      setBookingError("请选择预约日期和时间");
       return;
     }
+
+    const selected = new Date(`${bookDate}T${bookTime}:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(bookDate + "T00:00:00");
+
+    if (selectedDate < today) {
+      setBookingError("预约日期不能早于今天");
+      return;
+    }
+
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    if (selectedDate > threeMonthsLater) {
+      setBookingError("预约时间不能超过三个月后");
+      return;
+    }
+
+    if (selectedDate.getTime() === today.getTime() && selected <= now) {
+      setBookingError("预约时间不能早于当前时间");
+      return;
+    }
+
     const params = new URLSearchParams({ date: bookDate, time: bookTime });
     if (note) params.set("note", note);
     navigate(`/services/${serviceId}/confirm?${params.toString()}`);
@@ -144,6 +169,9 @@ export default function ServiceDetail() {
 
   const now = new Date();
   const minDate = now.toISOString().split("T")[0];
+  const maxDateObj = new Date();
+  maxDateObj.setMonth(maxDateObj.getMonth() + 3);
+  const maxDate = maxDateObj.toISOString().split("T")[0];
   const endTime = bookDate && bookTime
     ? new Date(`${bookDate}T${bookTime}:00`).getTime() + service.duration_minutes * 60000
     : null;
@@ -289,8 +317,9 @@ export default function ServiceDetail() {
               <input
                 type="date"
                 value={bookDate}
-                onChange={(e) => setBookDate(e.target.value)}
+                onChange={(e) => { setBookingError(""); setBookDate(e.target.value); }}
                 min={minDate}
+                max={maxDate}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
@@ -298,7 +327,7 @@ export default function ServiceDetail() {
               <input
                 type="time"
                 value={bookTime}
-                onChange={(e) => setBookTime(e.target.value)}
+                onChange={(e) => { setBookingError(""); setBookTime(e.target.value); }}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
@@ -316,6 +345,10 @@ export default function ServiceDetail() {
                 rows={3}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
+
+              {bookingError && (
+                <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+              )}
 
               <button
                 onClick={handleBooking}
