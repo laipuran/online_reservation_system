@@ -1,0 +1,40 @@
+info:
+  name: update_user_valid_phone
+  type: http
+  seq: 5
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/users/me
+  body:
+    type: json
+    data: |-
+      {
+        "name": "测试用户",
+        "phone": "138 0013-8000",
+        "avatar_url": "https://example.com/avatar.png"
+      }
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 200) {
+          throw new Error("update_user_valid_phone expected 200, got " + res.getStatus());
+        }
+        const body = res.getBody();
+        const phone = body && body.data && body.data.phone;
+        if (phone !== "138 0013-8000") {
+          throw new Error("updated user phone mismatch: " + phone);
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

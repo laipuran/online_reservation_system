@@ -1,0 +1,39 @@
+info:
+  name: update_user_invalid_phone
+  type: http
+  seq: 6
+
+http:
+  method: PUT
+  url: http://localhost:8080/api/v1/users/me
+  body:
+    type: json
+    data: |-
+      {
+        "name": "测试用户",
+        "phone": "138--0013",
+        "avatar_url": "https://example.com/avatar.png"
+      }
+  headers:
+    - name: Authorization
+      value: Bearer {{customer_token}}
+      enabled: true
+  auth: none
+
+runtime:
+  scripts:
+    - type: after-response
+      code: |-
+        if (res.getStatus() !== 400) {
+          throw new Error("update_user_invalid_phone expected 400, got " + res.getStatus());
+        }
+        const body = res.getBody();
+        if (!body || body.message !== "电话号码格式不正确") {
+          throw new Error("unexpected invalid phone message: " + (body && body.message));
+        }
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

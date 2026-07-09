@@ -18,6 +18,7 @@ var (
 	ErrWeakPassword           = errors.New("密码长度至少8位")
 	ErrNameRequired           = errors.New("昵称不能为空")
 	ErrInvalidRole            = errors.New("用户角色不正确")
+	ErrInvalidPhone           = errors.New("电话号码格式不正确")
 )
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)

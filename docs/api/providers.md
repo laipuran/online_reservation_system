@@ -76,8 +76,8 @@ curl -s http://localhost:8080/api/v1/providers/1
 | business_name | string | 是 | 商家名称 |
 | description | string | 是 | 商家简介 |
 | address | string | 是 | 地址 |
-| phone | string | 否 | 联系电话 |
-| contact_email | string | 是 | 联系邮箱，保存前自动转小写 |
+| phone | string | 否 | 联系电话；如填写，只能包含数字、空格和 `-`，不能包含连续 `-`，且至少包含 1 个数字 |
+| email | string | 否 | 联系邮箱，保存前自动转小写；如填写必须符合邮箱格式 |
 | logo_url | string | 否 | Logo URL |
 
 ### 成功响应 (201)
@@ -109,6 +109,8 @@ curl -s http://localhost:8080/api/v1/providers/1
 | 当前用户不是服务提供者 | 403 | 权限不足 |
 | 请求体非法 | 400 | 无效的请求体 |
 | 商家名称为空 | 400 | 商家名称不能为空 |
+| 邮箱格式非法 | 400 | 邮箱格式不正确 |
+| 电话号码格式非法 | 400 | 电话号码格式不正确 |
 | 当前用户已有服务提供者资料 | 409 | 服务提供者资料已存在 |
 
 ### 示例
@@ -194,8 +196,8 @@ curl -s http://localhost:8080/api/v1/providers/me \
 | business_name | string | 是 | 商家名称 |
 | description | string | 否 | 商家简介 |
 | address | string | 否 | 地址 |
-| phone | string | 否 | 联系电话 |
-| email | string | 否 | 联系邮箱，保存前自动转小写 |
+| phone | string | 否 | 联系电话；如填写，只能包含数字、空格和 `-`，不能包含连续 `-`，且至少包含 1 个数字 |
+| email | string | 否 | 联系邮箱，保存前自动转小写；如填写必须符合邮箱格式 |
 | logo_url | string | 否 | Logo URL |
 
 ### 成功响应 (200)
@@ -227,6 +229,8 @@ curl -s http://localhost:8080/api/v1/providers/me \
 | 当前用户不是服务提供者 | 403 | 权限不足 |
 | 请求体非法 | 400 | 无效的请求体 |
 | 商家名称为空 | 400 | 商家名称不能为空 |
+| 邮箱格式非法 | 400 | 邮箱格式不正确 |
+| 电话号码格式非法 | 400 | 电话号码格式不正确 |
 | 当前用户没有服务提供者资料 | 404 | 服务提供者不存在 |
 
 ### 示例

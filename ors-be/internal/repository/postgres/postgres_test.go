@@ -460,6 +460,25 @@ func TestReservationRepository_CreateQueryStatusAndConflict(t *testing.T) {
 		t.Fatalf("Create(duplicate service/start) error = %v, want ErrReservationTimeConflict", err)
 	}
 
+	conflict, err := f.reservations.HasTimeConflict(ctx, serviceA.ID, base.Add(30*time.Minute), base.Add(90*time.Minute))
+	requireNoError(t, err)
+	if !conflict {
+		t.Fatal("HasTimeConflict(overlap) = false, want true")
+	}
+
+	conflict, err = f.reservations.HasTimeConflict(ctx, serviceA.ID, base.Add(time.Hour), base.Add(2*time.Hour))
+	requireNoError(t, err)
+	if conflict {
+		t.Fatal("HasTimeConflict(adjacent) = true, want false")
+	}
+
+	cancelledReservation := f.createReservation(t, customerB.ID, serviceA.ID, base.Add(8*time.Hour), "cancelled", "cancelled")
+	conflict, err = f.reservations.HasTimeConflict(ctx, serviceA.ID, cancelledReservation.StartTime, cancelledReservation.EndTime)
+	requireNoError(t, err)
+	if conflict {
+		t.Fatal("HasTimeConflict(cancelled) = true, want false")
+	}
+
 	got, err := f.reservations.GetByID(ctx, reservationB.ID)
 	requireNoError(t, err)
 	if got == nil || got.Note != "bring water" || got.Status != "confirmed" {

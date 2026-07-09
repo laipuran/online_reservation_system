@@ -86,7 +86,8 @@ func (h *UserHandler) UpdatePassword() http.HandlerFunc {
 func writeUserError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, service.ErrNameRequired),
-		errors.Is(err, service.ErrWeakPassword):
+		errors.Is(err, service.ErrWeakPassword),
+		errors.Is(err, service.ErrInvalidPhone):
 		response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
 	case errors.Is(err, service.ErrCurrentPasswordWrong):
 		response.JSON(w, http.StatusUnauthorized, response.Unauthorized(err.Error()))

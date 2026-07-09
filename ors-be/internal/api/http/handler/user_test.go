@@ -15,8 +15,8 @@ import (
 )
 
 type mockUserService struct {
-	getMineFn       func(ctx context.Context, userID int64) (*model.User, error)
-	updateMineFn    func(ctx context.Context, userID int64, input service.UserInput) (*model.User, error)
+	getMineFn        func(ctx context.Context, userID int64) (*model.User, error)
+	updateMineFn     func(ctx context.Context, userID int64, input service.UserInput) (*model.User, error)
 	updatePasswordFn func(ctx context.Context, userID int64, input service.UserPasswordInput) error
 }
 
@@ -63,8 +63,8 @@ func TestUserHandler_GetMine_Success(t *testing.T) {
 	}
 
 	var resp struct {
-		Code int         `json:"code"`
-		Data model.User  `json:"data"`
+		Code int        `json:"code"`
+		Data model.User `json:"data"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode: %v", err)
@@ -156,8 +156,8 @@ func TestUserHandler_UpdateMine_Success(t *testing.T) {
 	}
 
 	var resp struct {
-		Code int         `json:"code"`
-		Data model.User  `json:"data"`
+		Code int        `json:"code"`
+		Data model.User `json:"data"`
 	}
 	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
 		t.Fatalf("decode: %v", err)
@@ -204,6 +204,26 @@ func TestUserHandler_UpdateMine_EmptyName(t *testing.T) {
 	h := NewUserHandler(svc)
 
 	body := `{"name":""}`
+	req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+	req = withCustomerClaims(req, 1)
+	w := httptest.NewRecorder()
+
+	h.UpdateMine()(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestUserHandler_UpdateMine_InvalidPhone(t *testing.T) {
+	svc := &mockUserService{
+		updateMineFn: func(_ context.Context, _ int64, _ service.UserInput) (*model.User, error) {
+			return nil, service.ErrInvalidPhone
+		},
+	}
+	h := NewUserHandler(svc)
+
+	body := `{"name":"test","phone":"138--0013"}`
 	req := httptest.NewRequest(http.MethodPut, "/api/v1/users/me", strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 	req = withCustomerClaims(req, 1)
