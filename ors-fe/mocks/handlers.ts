@@ -343,6 +343,63 @@ export const handlers = [
 
   /* ── Reviews ─────────────────────────────────────────────── */
 
+  http.post(`${API}/reviews`, async ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const body: any = await request.json();
+    const { reservation_id, rating, comment } = body;
+    if (!reservation_id || !rating || !comment) return err("参数不完整", 400);
+    if (rating < 1 || rating > 5) return err("评分必须在 1-5 之间", 400);
+
+    const res = db.reservation.findFirst({ where: { id: { equals: reservation_id } } });
+    if (!res) return err("预约不存在", 404);
+    if (res.user_id !== userId) return err("无权评价此预约", 403);
+    if (res.status !== "completed") return err("仅已完成预约可评价", 400);
+
+    const existingReview = db.review.findFirst({ where: { reservation_id: { equals: reservation_id } } });
+    if (existingReview) return err("已评价过此预约", 409);
+
+    const maxReview = db.review.count();
+    const now = new Date().toISOString();
+    const review = db.review.create({
+      id: maxReview + 1,
+      reservation_id,
+      user_id: userId,
+      service_id: res.service_id,
+      rating,
+      comment,
+      created_at: now,
+    });
+
+    const svc = db.service.findFirst({ where: { id: { equals: res.service_id } } });
+    if (svc) {
+      const allReviews = db.review.findMany({ where: { service_id: { equals: svc.id } } });
+      const totalReviews = allReviews.length;
+      const avg = allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+      db.service.update({
+        where: { id: { equals: svc.id } },
+        data: { avg_rating: Math.round(avg * 10) / 10, review_count: totalReviews, updated_at: now },
+      });
+    }
+
+    const p = svc ? db.provider.findFirst({ where: { id: { equals: svc.provider_id } } }) : null;
+    const notifMax = db.notification.count();
+    if (p) {
+      db.notification.create({
+        id: notifMax + 1,
+        user_id: p.user_id,
+        title: "收到新评价",
+        content: `您的服务「${svc?.title ?? ""}」收到了一条 ${rating}⭐ 评价。`,
+        type: "system",
+        is_read: false,
+        created_at: now,
+      });
+    }
+
+    const u = db.user.findFirst({ where: { id: { equals: userId } } });
+    return json({ ...review, user_name: u?.name ?? "匿名用户" }, 201, "created");
+  }),
+
   http.get(`${API}/services/:id/reviews`, ({ params, request }) => {
     const serviceId = Number(params.id);
     const s = db.service.findFirst({ where: { id: { equals: serviceId } } });

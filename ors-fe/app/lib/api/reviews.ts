@@ -6,6 +6,12 @@ export interface ReviewStats {
   distribution: Record<number, number>;
 }
 
+export interface CreateReviewInput {
+  reservation_id: number;
+  rating: number;
+  comment: string;
+}
+
 export interface ReviewItem {
   id: number;
   reservation_id: number;
@@ -28,6 +34,13 @@ export function fetchServiceReviewStats(
   serviceId: number
 ): Promise<ReviewStats> {
   return request<ReviewStats>(`/services/${serviceId}/reviews/stats`);
+}
+
+export function createReview(data: CreateReviewInput): Promise<ReviewItem> {
+  return request<ReviewItem>("/reviews", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
 export function fetchServiceReviews(
