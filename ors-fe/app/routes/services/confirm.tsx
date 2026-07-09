@@ -18,7 +18,7 @@ export default function ConfirmPage() {
 
   const bookingMutation = useMutation({
     mutationFn: () => {
-      const startTime = `${searchParams.get("date")}T${searchParams.get("time")}:00`;
+      const startTime = `${searchParams.get("date")}T${searchParams.get("time")}:00Z`;
       return createReservation({
         service_id: serviceId,
         start_time: startTime,
@@ -27,6 +27,9 @@ export default function ConfirmPage() {
     },
     onSuccess: () => {
       navigate("/dashboard");
+    },
+    onError: (err: Error) => {
+      alert(err.message || "预约失败，请重试");
     },
   });
 
