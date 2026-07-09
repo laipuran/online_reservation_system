@@ -74,7 +74,7 @@ export default function Dashboard() {
   if (loading || providerQuery.isLoading) {
     return (
       <div className="flex items-center justify-center mt-20">
-        <p className="text-gray-500">加载中...</p>
+        <p className="text-gray-500 dark:text-gray-400">加载中...</p>
       </div>
     );
   }
@@ -136,11 +136,11 @@ export default function Dashboard() {
       <div className="mt-4 space-y-3">
         {reservationsLoading ? (
           <div className="flex justify-center py-16">
-            <p className="text-gray-400">加载中...</p>
+            <p className="text-gray-400 dark:text-gray-500">加载中...</p>
           </div>
         ) : reservations.length === 0 ? (
           <div className="flex justify-center py-16">
-            <p className="text-gray-400">暂无预约记录</p>
+            <p className="text-gray-400 dark:text-gray-500">暂无预约记录</p>
           </div>
         ) : (
           reservations.map((r) => (
@@ -171,7 +171,7 @@ export default function Dashboard() {
           >
             上一页
           </button>
-          <span className="text-sm text-gray-500">第 {page} 页</span>
+          <span className="text-sm text-gray-500 dark:text-gray-400">第 {page} 页</span>
           <button
             onClick={() => setPage((p) => p + 1)}
             disabled={!hasMore}

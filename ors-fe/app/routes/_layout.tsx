@@ -1,11 +1,22 @@
 import { Link, Outlet, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../lib/hooks/use-auth";
 import { NotificationBell } from "../lib/components/notification-bell";
+import { ThemeToggle } from "../lib/components/theme-toggle";
 
-const TABS = [
+const GUEST_TABS = [
+  { label: "首页", to: "/" },
+  { label: "预约项目", to: "/services" },
+];
+
+const CUSTOMER_TABS = [
   { label: "首页", to: "/" },
   { label: "预约项目", to: "/services" },
   { label: "我的预约", to: "/dashboard" },
+];
+
+const PROVIDER_TABS = [
+  { label: "服务管理", to: "/provider/services" },
+  { label: "预约处理", to: "/provider/reservations" },
 ];
 
 export default function Layout() {
@@ -23,6 +34,8 @@ export default function Layout() {
     navigate("/");
   }
 
+  const tabs = !user ? GUEST_TABS : user.role === "provider" ? PROVIDER_TABS : CUSTOMER_TABS;
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b border-gray-200 dark:border-gray-700">
@@ -32,14 +45,14 @@ export default function Layout() {
               ORS
             </Link>
             <div className="flex items-center gap-1">
-              {TABS.map((tab) => (
+              {tabs.map((tab) => (
                 <Link
                   key={tab.to}
                   to={tab.to}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     isActive(tab.to)
-                      ? "bg-blue-50 text-blue-700 font-medium"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                      ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-900/30 dark:text-blue-300"
+                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"
                   }`}
                 >
                   {tab.label}
@@ -48,12 +61,13 @@ export default function Layout() {
             </div>
           </div>
           {!loading && (
-            <div className="flex items-center gap-4 shrink-0">
+            <div className="flex items-center gap-3 shrink-0">
+              <ThemeToggle />
               {user ? (
                 <>
                   <Link
                     to="/dashboard"
-                    className="text-sm text-gray-600 hover:underline"
+                    className="text-sm text-gray-600 hover:underline dark:text-gray-400"
                   >
                     {user.name}
                   </Link>
@@ -72,7 +86,7 @@ export default function Layout() {
                 <>
                   <Link
                     to="/login"
-                    className="text-sm text-gray-600 hover:underline"
+                    className="text-sm text-gray-600 hover:underline dark:text-gray-400"
                   >
                     登录
                   </Link>

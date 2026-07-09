@@ -53,13 +53,13 @@ export default function ServicesPage() {
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-start justify-between mb-2">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">自助预约项目</h1>
-          <p className="text-sm text-gray-500 mt-1">发现优质服务，轻松预约</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">自助预约项目</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">发现优质服务，轻松预约</p>
         </div>
         <input
           type="text"
           placeholder="搜索服务..."
-          className="border border-gray-300 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
       </div>
 
@@ -81,7 +81,7 @@ export default function ServicesPage() {
             className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors ${
               selectedParentId === p.id
                 ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
             }`}
           >
             {p.name}
@@ -91,11 +91,11 @@ export default function ServicesPage() {
 
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-gray-400">加载中...</p>
+          <p className="text-gray-400 dark:text-gray-500">加载中...</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex items-center justify-center py-20">
-          <p className="text-gray-400">暂无服务</p>
+          <p className="text-gray-400 dark:text-gray-500">暂无服务</p>
         </div>
       ) : selectedParentId === null ? (
         <div className="grid grid-cols-3 gap-6">
@@ -115,7 +115,7 @@ export default function ServicesPage() {
         </div>
       ) : (
         <section>
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
             {categories.find((c) => c.id === selectedParentId)?.name ?? ""}
           </h2>
           <div className="grid grid-cols-3 gap-6">

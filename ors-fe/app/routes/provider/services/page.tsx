@@ -1,20 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useMyProvider, useProviderServices, useUpdateServiceStatus } from "../../../lib/hooks/use-provider";
-
-const STATUS_LABEL: Record<string, string> = {
-  active: "已上架",
-  inactive: "已下架",
-  pending: "待审核",
-  rejected: "已驳回",
-};
-
-const STATUS_CLASS: Record<string, string> = {
-  active: "bg-green-100 text-green-700",
-  inactive: "bg-gray-100 text-gray-500",
-  pending: "bg-yellow-100 text-yellow-700",
-  rejected: "bg-red-100 text-red-700",
-};
+import { STATUS_CONFIG } from "../../../lib/status";
 
 export default function ProviderServicesPage() {
   const navigate = useNavigate();
@@ -73,11 +60,11 @@ export default function ProviderServicesPage() {
 
       {loadingProvider || loadingServices ? (
         <div className="flex justify-center py-20">
-          <p className="text-gray-400">加载中...</p>
+          <p className="text-gray-400 dark:text-gray-500">加载中...</p>
         </div>
       ) : services.length === 0 ? (
         <div className="flex justify-center py-20">
-          <p className="text-gray-400">暂无服务</p>
+          <p className="text-gray-400 dark:text-gray-500">暂无服务</p>
         </div>
       ) : (
         <>
@@ -104,22 +91,22 @@ export default function ProviderServicesPage() {
                     <td className="px-4 py-3">
                       <span
                         className={`inline-block text-xs px-2 py-0.5 rounded ${
-                          STATUS_CLASS[s.status] ?? ""
+                          (STATUS_CONFIG[s.status] ?? STATUS_CONFIG.active).className
                         }`}
                       >
-                        {STATUS_LABEL[s.status] ?? s.status}
+                        {(STATUS_CONFIG[s.status] ?? STATUS_CONFIG.active).label}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right space-x-2">
                       <Link
                         to={`/provider/services/${s.id}`}
-                        className="text-blue-600 hover:underline text-xs"
+                        className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
                       >
                         详情
                       </Link>
                       <Link
                         to={`/provider/services/${s.id}/edit`}
-                        className="text-blue-600 hover:underline text-xs"
+                        className="text-blue-600 dark:text-blue-400 hover:underline text-xs"
                       >
                         修改
                       </Link>
@@ -147,7 +134,7 @@ export default function ProviderServicesPage() {
               >
                 上一页
               </button>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 {page} / {totalPages}
               </span>
               <button
@@ -166,7 +153,7 @@ export default function ProviderServicesPage() {
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-sm mx-4 shadow-xl">
             <h3 className="text-lg font-semibold mb-2">确认下架</h3>
-            <p className="text-sm text-gray-500 mb-6">确定要下架此服务吗？下架后用户将无法预约。</p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">确定要下架此服务吗？下架后用户将无法预约。</p>
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => setDeletingId(null)}

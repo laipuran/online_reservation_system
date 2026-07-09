@@ -62,7 +62,7 @@ export default function NewServicePage() {
       <div className="mb-6">
         <Link
           to="/provider/services"
-          className="text-sm text-blue-600 hover:underline"
+          className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
         >
           &larr; 返回服务管理
         </Link>
