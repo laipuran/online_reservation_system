@@ -30,7 +30,7 @@ export default function ServicesPage() {
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
 
   const parentCategories = useMemo(
-    () => categories.filter((c) => c.parent_id == null),
+    () => categories.filter((c) => !c.parent_id),
     [categories]
   );
 
