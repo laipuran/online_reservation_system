@@ -116,7 +116,11 @@ export default function Register() {
         await setInterestsMutation.mutateAsync(interestIds);
       }
 
-      navigate("/dashboard");
+      if (role === "provider") {
+        navigate("/complete-profile", { replace: true });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -134,13 +138,13 @@ export default function Register() {
       <div className="flex items-center justify-center gap-2 mb-6">
         <span
           className={`w-2.5 h-2.5 rounded-full ${
-            step === 1 ? "bg-blue-600" : "bg-gray-300"
+            step === 1 ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
           }`}
         />
-        <span className="text-gray-300">—</span>
+        <span className="text-gray-300 dark:text-gray-600">—</span>
         <span
           className={`w-2.5 h-2.5 rounded-full ${
-            step === 2 ? "bg-blue-600" : "bg-gray-300"
+            step === 2 ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-600"
           }`}
         />
       </div>
@@ -223,9 +227,9 @@ export default function Register() {
         </div>
       )}
 
-      <p className="text-sm text-center mt-4 text-gray-500">
+      <p className="text-sm text-center mt-4 text-gray-500 dark:text-gray-400">
         已有账号？{" "}
-        <Link to="/login" className="text-blue-600 hover:underline">
+        <Link to="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
           登录
         </Link>
       </p>

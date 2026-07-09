@@ -6,7 +6,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  const { data: notifications } = useNotifications();
+  const { data: notificationsData } = useNotifications();
   const { data: unread } = useUnreadCount();
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
@@ -37,7 +37,7 @@ export function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-1.5 rounded-full text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700 transition-colors"
+        className="relative p-1.5 rounded-full text-gray-500 dark:text-gray-400 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-200 dark:hover:bg-gray-700 transition-colors"
         aria-label="通知"
       >
         <Bell className="w-5 h-5" />
@@ -55,7 +55,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={() => markAll.mutate()}
-                className="text-xs text-blue-600 hover:underline"
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
               >
                 全部已读
               </button>
@@ -63,10 +63,10 @@ export function NotificationBell() {
           </div>
 
           <div className="max-h-80 overflow-y-auto">
-            {(!notifications || notifications.length === 0) ? (
-              <p className="text-center text-sm text-gray-400 py-8">暂无通知</p>
+            {(!notificationsData?.items || notificationsData.items.length === 0) ? (
+              <p className="text-center text-sm text-gray-400 dark:text-gray-500 py-8">暂无通知</p>
             ) : (
-              notifications.map((n) => (
+              notificationsData.items.map((n) => (
                 <div
                   key={n.id}
                   className={`px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 hover:bg-gray-50 dark:hover:bg-gray-700/30 cursor-pointer transition-colors ${
@@ -80,7 +80,7 @@ export function NotificationBell() {
                     <p className={`text-sm ${n.is_read ? "text-gray-600 dark:text-gray-400" : "text-gray-900 dark:text-gray-100 font-medium"}`}>
                       {n.title}
                     </p>
-                    <span className="shrink-0 text-[11px] text-gray-400 mt-0.5">
+                    <span className="shrink-0 text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">
                       {timeAgo(n.created_at)}
                     </span>
                   </div>

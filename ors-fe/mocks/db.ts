@@ -254,7 +254,7 @@ export function seed() {
     created_at: now,
   });
 
-  /* ── 17 个服务（id 1,2,6,9 保持内容不变） ────────────── */
+  /* ── 19 个服务（低分服务 id 18,19 为新增） ────────────── */
 
   db.service.create({
     id: 1,
@@ -511,6 +511,36 @@ export function seed() {
     created_at: now,
     updated_at: now,
   });
+  db.service.create({
+    id: 18,
+    title: "基础足部按摩 30 分钟",
+    description: "初级技师提供的基础足部按摩服务，适合想简单放松的顾客。",
+    price: 99,
+    duration_minutes: 30,
+    avg_rating: 3.2,
+    review_count: 28,
+    status: "active",
+    image_url: "",
+    provider_id: 1,
+    category_id: 202,
+    created_at: now,
+    updated_at: now,
+  });
+  db.service.create({
+    id: 19,
+    title: "快速面部清洁",
+    description: "基础面部清洁服务，适合预算有限的顾客，效果因肤质而异。",
+    price: 88,
+    duration_minutes: 30,
+    avg_rating: 3.5,
+    review_count: 42,
+    status: "active",
+    image_url: "",
+    provider_id: 2,
+    category_id: 301,
+    created_at: now,
+    updated_at: now,
+  });
 
   /* ── Tags ─────────────────────────────────────────────── */
 
@@ -606,7 +636,7 @@ export function seed() {
     tag_id: 1,
   });
 
-  /* ── Reservations（保留，引用的 service_id 1,2,6,9 未变） ── */
+  /* ── 13 条预约（覆盖 5 种状态） ───────────────────────── */
 
   db.reservation.create({
     id: 1001,
@@ -663,16 +693,223 @@ export function seed() {
     created_at: now,
     updated_at: now,
   });
-
-  db.review.create({
-    id: 501,
-    reservation_id: 1004,
-    user_id: 3,
-    service_id: 1,
-    rating: 5,
-    comment: "非常专业，按完之后舒服多了。",
+  db.reservation.create({
+    id: 1006,
+    user_id: 1,
+    service_id: 3,
+    start_time: "2026-07-05T10:00:00Z",
+    end_time: "2026-07-05T11:30:00Z",
+    status: "completed",
+    note: "",
     created_at: now,
+    updated_at: now,
   });
+  db.reservation.create({
+    id: 1007,
+    user_id: 1,
+    service_id: 4,
+    start_time: "2026-07-06T14:00:00Z",
+    end_time: "2026-07-06T15:00:00Z",
+    status: "completed",
+    note: "力道可以重一点",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1008,
+    user_id: 1,
+    service_id: 7,
+    start_time: "2026-07-07T09:00:00Z",
+    end_time: "2026-07-07T10:15:00Z",
+    status: "cancelled",
+    note: "临时有事",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1009,
+    user_id: 1,
+    service_id: 8,
+    start_time: "2026-07-04T16:00:00Z",
+    end_time: "2026-07-04T16:45:00Z",
+    status: "rejected",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1010,
+    user_id: 3,
+    service_id: 2,
+    start_time: "2026-07-03T10:00:00Z",
+    end_time: "2026-07-03T11:30:00Z",
+    status: "completed",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1011,
+    user_id: 3,
+    service_id: 11,
+    start_time: "2026-07-05T14:00:00Z",
+    end_time: "2026-07-05T15:00:00Z",
+    status: "completed",
+    note: "敏感肌，请用温和产品",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1012,
+    user_id: 3,
+    service_id: 12,
+    start_time: "2026-07-02T09:00:00Z",
+    end_time: "2026-07-02T10:15:00Z",
+    status: "cancelled",
+    note: "",
+    created_at: now,
+    updated_at: now,
+  });
+  db.reservation.create({
+    id: 1013,
+    user_id: 3,
+    service_id: 5,
+    start_time: "2026-07-01T10:00:00Z",
+    end_time: "2026-07-01T12:00:00Z",
+    status: "rejected",
+    note: "想换一个样式",
+    created_at: now,
+    updated_at: now,
+  });
+
+  const reviewComments: Record<number, { user_id: number; rating: number; comment: string }[]> = {
+    1: [
+      { user_id: 3, rating: 5, comment: "非常专业，按完之后舒服多了。" },
+      { user_id: 1, rating: 4, comment: "环境很好，手法专业，下次还来。" },
+      { user_id: 3, rating: 5, comment: "肩颈舒服多了，老师傅手艺好！" },
+      { user_id: 1, rating: 4, comment: "价格合理，服务态度好。" },
+      { user_id: 3, rating: 5, comment: "强烈推荐，长期伏案工作者的福音" },
+      { user_id: 1, rating: 3, comment: "一般般，没有想象中好" },
+      { user_id: 3, rating: 5, comment: "按完轻松很多，会再来的" },
+    ],
+    2: [
+      { user_id: 1, rating: 5, comment: "做完皮肤明显变亮，效果很好" },
+      { user_id: 3, rating: 4, comment: "姐姐很细心，清洁很到位" },
+      { user_id: 1, rating: 5, comment: "黑头少了很多，好评" },
+      { user_id: 3, rating: 4, comment: "仪器很专业，值得尝试" },
+    ],
+    3: [
+      { user_id: 1, rating: 5, comment: "精油很好闻，全身都放松了" },
+      { user_id: 3, rating: 4, comment: "手法不错，环境舒适" },
+      { user_id: 1, rating: 3, comment: "价格有点贵，性价比一般" },
+      { user_id: 3, rating: 5, comment: "做完皮肤滑滑的，推荐！" },
+    ],
+    4: [
+      { user_id: 3, rating: 5, comment: "背部经络疏通效果明显" },
+      { user_id: 1, rating: 4, comment: "按完很舒服，下次还来" },
+      { user_id: 3, rating: 4, comment: "技师很专业" },
+    ],
+    5: [
+      { user_id: 1, rating: 4, comment: "效果很好，颜色自然" },
+      { user_id: 3, rating: 5, comment: "纹完很满意，朋友都说好看" },
+      { user_id: 1, rating: 3, comment: "恢复期有点长" },
+      { user_id: 3, rating: 5, comment: "很自然，不疼" },
+    ],
+    6: [
+      { user_id: 3, rating: 5, comment: "老师非常专业，一节课下来收获很多" },
+      { user_id: 1, rating: 5, comment: "环境安静，适合冥想放松" },
+      { user_id: 3, rating: 4, comment: "瑜伽课程安排合理" },
+    ],
+    7: [
+      { user_id: 1, rating: 4, comment: "精油推背很舒服" },
+      { user_id: 3, rating: 5, comment: "背部轻松了很多" },
+      { user_id: 1, rating: 4, comment: "技师手法到位" },
+      { user_id: 3, rating: 3, comment: "价格有点小贵" },
+    ],
+    8: [
+      { user_id: 3, rating: 4, comment: "按完脚很舒服" },
+      { user_id: 1, rating: 5, comment: "穴位找得很准" },
+      { user_id: 3, rating: 4, comment: "环境干净整洁" },
+    ],
+    9: [
+      { user_id: 1, rating: 5, comment: "全身推拿非常舒服，强烈推荐" },
+      { user_id: 3, rating: 5, comment: "90分钟彻底放松，物超所值" },
+      { user_id: 1, rating: 4, comment: "手法好，服务周到" },
+    ],
+    10: [
+      { user_id: 3, rating: 4, comment: "中药泡脚很舒服" },
+      { user_id: 1, rating: 5, comment: "泡完全身暖和" },
+      { user_id: 3, rating: 4, comment: "药材味道很好闻" },
+    ],
+    11: [
+      { user_id: 1, rating: 5, comment: "清洁效果很明显" },
+      { user_id: 3, rating: 4, comment: "做完脸很干净" },
+      { user_id: 1, rating: 4, comment: "仪器操作很专业" },
+      { user_id: 3, rating: 2, comment: "效果一般，没有想象中好" },
+    ],
+    12: [
+      { user_id: 3, rating: 5, comment: "毛孔真的变小了" },
+      { user_id: 1, rating: 4, comment: "痘痘改善了很多" },
+      { user_id: 3, rating: 4, comment: "控油效果不错" },
+    ],
+    13: [
+      { user_id: 1, rating: 5, comment: "做完皮肤紧致了很多" },
+      { user_id: 3, rating: 4, comment: "效果很明显，会继续做" },
+      { user_id: 1, rating: 5, comment: "美容师很细心" },
+      { user_id: 3, rating: 3, comment: "价格偏高" },
+    ],
+    14: [
+      { user_id: 3, rating: 5, comment: "导入完皮肤水嫩嫩的" },
+      { user_id: 1, rating: 4, comment: "补水效果很好" },
+      { user_id: 3, rating: 4, comment: "服务态度很好" },
+    ],
+    15: [
+      { user_id: 1, rating: 5, comment: "冥想完心情平静了很多" },
+      { user_id: 3, rating: 4, comment: "老师引导得很好" },
+      { user_id: 1, rating: 4, comment: "环境很安静" },
+    ],
+    16: [
+      { user_id: 3, rating: 5, comment: "颂钵的声音太治愈了" },
+      { user_id: 1, rating: 5, comment: "做完身心都放松了" },
+      { user_id: 3, rating: 4, comment: "很特别的体验" },
+      { user_id: 1, rating: 5, comment: "强烈推荐压力大的人试试" },
+    ],
+    17: [
+      { user_id: 1, rating: 5, comment: "全身SPA太享受了" },
+      { user_id: 3, rating: 4, comment: "精油味道很好闻" },
+      { user_id: 1, rating: 5, comment: "环境和服务都是一流的" },
+    ],
+    18: [
+      { user_id: 3, rating: 3, comment: "时间太短了，刚有点感觉就结束了" },
+      { user_id: 1, rating: 2, comment: "技师手法一般，不够专业" },
+      { user_id: 3, rating: 4, comment: "价格便宜，随便按按还行" },
+      { user_id: 1, rating: 3, comment: "性价比一般，一分钱一分货" },
+      { user_id: 3, rating: 2, comment: "不太满意，按完没什么感觉" },
+    ],
+    19: [
+      { user_id: 1, rating: 3, comment: "清洁不太彻底" },
+      { user_id: 3, rating: 4, comment: "基础清洁够用了，价格实惠" },
+      { user_id: 1, rating: 2, comment: "做完有点过敏，可能肤质不适合" },
+      { user_id: 3, rating: 4, comment: "对于这个价格来说还不错" },
+      { user_id: 1, rating: 3, comment: "效果一般，没有广告说的那么好" },
+    ],
+  };
+
+  let reviewId = 500;
+  for (const [serviceId, comments] of Object.entries(reviewComments)) {
+    for (const c of comments) {
+      reviewId++;
+      db.review.create({
+        id: reviewId,
+        reservation_id: reviewId,
+        user_id: c.user_id,
+        service_id: Number(serviceId),
+        rating: c.rating,
+        comment: c.comment,
+        created_at: now,
+      });
+    }
+  }
 
   db.notification.create({
     id: 1,

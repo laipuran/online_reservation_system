@@ -79,7 +79,7 @@ export default function RegisterStepBasic({
               key={opt.value}
               className={`flex items-center gap-3 border rounded-lg px-4 py-3 cursor-pointer transition-colors ${
                 role === opt.value
-                  ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  ? "border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20"
                   : "border-gray-300 dark:border-gray-600 hover:border-gray-400"
               }`}
             >

@@ -341,6 +341,102 @@ export const handlers = [
     return json(t, 201, "created");
   }),
 
+  /* ── Reviews ─────────────────────────────────────────────── */
+
+  http.post(`${API}/reviews`, async ({ request }) => {
+    const userId = getUserId(request);
+    if (!userId) return err("缺少认证信息", 401);
+    const body: any = await request.json();
+    const { reservation_id, rating, comment } = body;
+    if (!reservation_id || !rating || !comment) return err("参数不完整", 400);
+    if (rating < 1 || rating > 5) return err("评分必须在 1-5 之间", 400);
+
+    const res = db.reservation.findFirst({ where: { id: { equals: reservation_id } } });
+    if (!res) return err("预约不存在", 404);
+    if (res.user_id !== userId) return err("无权评价此预约", 403);
+    if (res.status !== "completed") return err("仅已完成预约可评价", 400);
+
+    const existingReview = db.review.findFirst({ where: { reservation_id: { equals: reservation_id } } });
+    if (existingReview) return err("已评价过此预约", 409);
+
+    const maxReview = db.review.count();
+    const now = new Date().toISOString();
+    const review = db.review.create({
+      id: maxReview + 1,
+      reservation_id,
+      user_id: userId,
+      service_id: res.service_id,
+      rating,
+      comment,
+      created_at: now,
+    });
+
+    const svc = db.service.findFirst({ where: { id: { equals: res.service_id } } });
+    if (svc) {
+      const allReviews = db.review.findMany({ where: { service_id: { equals: svc.id } } });
+      const totalReviews = allReviews.length;
+      const avg = allReviews.reduce((sum, r) => sum + r.rating, 0) / totalReviews;
+      db.service.update({
+        where: { id: { equals: svc.id } },
+        data: { avg_rating: Math.round(avg * 10) / 10, review_count: totalReviews, updated_at: now },
+      });
+    }
+
+    const p = svc ? db.provider.findFirst({ where: { id: { equals: svc.provider_id } } }) : null;
+    const notifMax = db.notification.count();
+    if (p) {
+      db.notification.create({
+        id: notifMax + 1,
+        user_id: p.user_id,
+        title: "收到新评价",
+        content: `您的服务「${svc?.title ?? ""}」收到了一条 ${rating}⭐ 评价。`,
+        type: "system",
+        is_read: false,
+        created_at: now,
+      });
+    }
+
+    const u = db.user.findFirst({ where: { id: { equals: userId } } });
+    return json({ ...review, user_name: u?.name ?? "匿名用户" }, 201, "created");
+  }),
+
+  http.get(`${API}/services/:id/reviews`, ({ params, request }) => {
+    const serviceId = Number(params.id);
+    const s = db.service.findFirst({ where: { id: { equals: serviceId } } });
+    if (!s) return err("服务不存在", 404);
+    const url = new URL(request.url);
+    const { page, pageSize, offset } = pageParams(url);
+
+    let list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
+    const total = list.length;
+    list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const items = list.slice(offset, offset + pageSize).map((r) => {
+      const u = db.user.findFirst({ where: { id: { equals: r.user_id } } });
+      return {
+        ...r,
+        user_name: u?.name ?? "匿名用户",
+      };
+    });
+    return json({ items, total, page, page_size: pageSize });
+  }),
+
+  http.get(`${API}/services/:id/reviews/stats`, ({ params }) => {
+    const serviceId = Number(params.id);
+    const s = db.service.findFirst({ where: { id: { equals: serviceId } } });
+    if (!s) return err("服务不存在", 404);
+    const list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of list) {
+      distribution[r.rating] = (distribution[r.rating] ?? 0) + 1;
+    }
+    const total = list.length;
+    const avg =
+      total > 0
+        ? list.reduce((sum, r) => sum + r.rating, 0) / total
+        : s.avg_rating;
+    return json({ avg_rating: avg, total, distribution });
+  }),
+
   /* ── Reservations (provider) ────────────────────────────── */
 
   http.get(`${API}/provider/reservations`, ({ request }) => {
@@ -366,9 +462,20 @@ export const handlers = [
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "confirmed", updated_at: new Date().toISOString() },
+    });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: r.user_id,
+      title: "预约已确认",
+      content: `您预约的「${svc?.title ?? "服务"}」已由商家确认，请按时到达。`,
+      type: "reservation_confirmed",
+      is_read: false,
+      created_at: new Date().toISOString(),
     });
     return json(updated);
   }),
@@ -377,9 +484,20 @@ export const handlers = [
     const id = Number(params.id);
     const r = db.reservation.findFirst({ where: { id: { equals: id } } });
     if (!r) return err("预约不存在", 404);
+    const svc = db.service.findFirst({ where: { id: { equals: r.service_id } } });
     const updated = db.reservation.update({
       where: { id: { equals: id } },
       data: { status: "rejected", updated_at: new Date().toISOString() },
+    });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: r.user_id,
+      title: "预约已拒绝",
+      content: `您预约的「${svc?.title ?? "服务"}」已被商家拒绝，请查看其他服务。`,
+      type: "system",
+      is_read: false,
+      created_at: new Date().toISOString(),
     });
     return json(updated);
   }),
@@ -407,6 +525,16 @@ export const handlers = [
       updated_at: now,
     });
     const p = db.provider.findFirst({ where: { id: { equals: svc.provider_id } } });
+    const notifMax = db.notification.count();
+    db.notification.create({
+      id: notifMax + 1,
+      user_id: userId,
+      title: "预约已创建",
+      content: `您已成功预约「${svc.title}」，请耐心等待商家确认。`,
+      type: "system",
+      is_read: false,
+      created_at: now,
+    });
     return json({
       id: r.id,
       service: {

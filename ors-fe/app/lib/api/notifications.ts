@@ -14,16 +14,22 @@ export interface UnreadCountResponse {
   count: number;
 }
 
+export interface NotificationListResponse {
+  items: NotificationItem[];
+  page: number;
+  page_size: number;
+}
+
 export function fetchNotifications(
   isRead?: boolean,
   page = 1,
   pageSize = 20
-): Promise<NotificationItem[]> {
+): Promise<NotificationListResponse> {
   const query = new URLSearchParams();
   if (isRead !== undefined) query.set("is_read", String(isRead));
   query.set("page", String(page));
   query.set("page_size", String(pageSize));
-  return request<NotificationItem[]>(
+  return request<NotificationListResponse>(
     `/notifications?${query.toString()}`
   );
 }
@@ -40,8 +46,8 @@ export function markNotificationRead(
   });
 }
 
-export function markAllNotificationsRead(): Promise<{ affected: number }> {
-  return request<{ affected: number }>("/notifications/read-all", {
+export function markAllNotificationsRead(): Promise<{ updated_count: number }> {
+  return request<{ updated_count: number }>("/notifications/read-all", {
     method: "PUT",
   });
 }

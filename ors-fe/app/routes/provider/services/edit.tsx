@@ -83,7 +83,7 @@ export default function EditServicePage() {
   if (loadingService) {
     return (
       <div className="flex justify-center py-20">
-        <p className="text-gray-400">加载中...</p>
+        <p className="text-gray-400 dark:text-gray-500">加载中...</p>
       </div>
     );
   }
@@ -94,12 +94,12 @@ export default function EditServicePage() {
         <div className="mb-6">
           <Link
             to="/provider/services"
-            className="text-sm text-blue-600 hover:underline"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
           >
             &larr; 返回服务管理
           </Link>
         </div>
-        <p className="text-gray-500">服务不存在</p>
+        <p className="text-gray-500 dark:text-gray-400">服务不存在</p>
       </div>
     );
   }
@@ -107,15 +107,15 @@ export default function EditServicePage() {
   return (
     <div className="max-w-lg">
       <div className="mb-6">
-        <Link
-          to="/provider/services"
-          className="text-sm text-blue-600 hover:underline"
-        >
-          &larr; 返回服务管理
-        </Link>
-      </div>
+          <Link
+            to="/provider/services"
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            &larr; 返回服务管理
+          </Link>
+        </div>
 
-      <h1 className="text-2xl font-bold mb-6">修改服务</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">修改服务</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
