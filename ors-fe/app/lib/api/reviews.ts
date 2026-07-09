@@ -12,7 +12,7 @@ export interface ReviewItem {
   user_id: number;
   service_id: number;
   rating: number;
-  comment: string;
+  comment?: string;
   created_at: string;
 }
 
@@ -20,6 +20,7 @@ export interface ReviewListResponse {
   items: ReviewItem[];
   page: number;
   page_size: number;
+
 }
 
 export function createReview(data: CreateReviewInput): Promise<ReviewItem> {

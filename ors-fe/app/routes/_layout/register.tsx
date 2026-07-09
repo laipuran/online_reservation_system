@@ -18,6 +18,7 @@ import {
 
 type Role = "customer" | "provider";
 
+
 export default function Register() {
   const navigate = useNavigate();
 
@@ -118,11 +119,7 @@ export default function Register() {
         await setInterestsMutation.mutateAsync(interestIds);
       }
 
-      if (role === "provider") {
-        navigate("/dashboard", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -141,7 +138,7 @@ export default function Register() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-6">注册</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">注册</h1>
 
       {/* step indicator */}
       <div className="flex items-center justify-center gap-2 mb-6">

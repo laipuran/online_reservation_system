@@ -63,7 +63,7 @@ export default function CompleteProfile() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-2">完善商家信息</h1>
+      <h1 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">完善商家信息</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
         请填写商家资料以完成注册
       </p>
