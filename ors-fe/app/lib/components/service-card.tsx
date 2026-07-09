@@ -73,7 +73,7 @@ export function ServiceCard({
             <span className="text-sm">￥</span>
             {price}
           </span>
-          <span className="text-xs text-gray-400 dark:text-gray-500 leading-none">
+          <span className="text-sm text-gray-400">
             {durationMinutes} 分钟
           </span>
         </div>
