@@ -49,6 +49,13 @@ function getUserId(request: Request): number | null {
 /* ── Auth ─────────────────────────────────────────────────── */
 
 export const handlers = [
+  http.get(`${API}/auth/check-email`, ({ request }) => {
+    const url = new URL(request.url);
+    const email = url.searchParams.get("email");
+    const exists = email ? !!db.user.findFirst({ where: { email: { equals: email } } }) : false;
+    return json({ exists });
+  }),
+
   http.post(`${API}/auth/register`, async ({ request }) => {
     const body: any = await request.json();
     const exists = db.user.findFirst({ where: { email: { equals: body.email } } });

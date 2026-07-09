@@ -9,6 +9,7 @@ import {
   useSetUserInterests,
 } from "../../lib/hooks/use-mutations";
 import { ApiError } from "../../lib/api/client";
+import { checkEmail } from "../../lib/api/auth";
 import {
   validateProviderFields,
   EMPTY_PROVIDER_FIELDS,
@@ -26,6 +27,9 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("customer");
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailExistsErr, setEmailExistsErr] = useState(false);
 
   const [providerFields, setProviderFields] = useState<ProviderFields>(EMPTY_PROVIDER_FIELDS);
   const [providerErrors, setProviderErrors] = useState<Partial<Record<keyof ProviderFields, string>>>({});
@@ -52,14 +56,28 @@ export default function Register() {
     return errs;
   }
 
-  function handleNext() {
+  async function handleNext() {
     setError("");
+    setSubmitted(true);
 
     const errs = fieldErrors();
     if (Object.keys(errs).length > 0) {
-      const first = errs.name || errs.email || errs.password || "";
-      setError(first);
       return;
+    }
+
+    setCheckingEmail(true);
+    setEmailExistsErr(false);
+    try {
+      const { exists } = await checkEmail(email.trim());
+      if (exists) {
+        setEmailExistsErr(true);
+        return;
+      }
+    } catch {
+      setError("无法验证邮箱，请稍后重试");
+      return;
+    } finally {
+      setCheckingEmail(false);
     }
 
     setStep(2);
@@ -115,9 +133,10 @@ export default function Register() {
   }
 
   const step1FieldErrors = fieldErrors();
-  // Only show inline errors after user has attempted to proceed (error is set)
-  const inlineErrors = error
-    ? step1FieldErrors
+  const inlineErrors = submitted
+    ? emailExistsErr
+      ? { ...step1FieldErrors, email: "该邮箱已被注册" }
+      : step1FieldErrors
     : {};
 
   return (
@@ -147,9 +166,9 @@ export default function Register() {
           role={role}
           error={error}
           fieldErrors={inlineErrors}
-          loading={submitting}
-          onNameChange={setName}
-          onEmailChange={setEmail}
+          loading={submitting || checkingEmail}
+          onNameChange={(v) => { setSubmitted(false); setName(v); }}
+          onEmailChange={(v) => { setEmailExistsErr(false); setEmail(v); }}
           onPasswordChange={setPassword}
           onRoleChange={setRole}
           onNext={handleNext}
