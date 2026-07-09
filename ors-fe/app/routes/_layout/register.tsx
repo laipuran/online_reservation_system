@@ -9,35 +9,13 @@ import {
   useSetUserInterests,
 } from "../../lib/hooks/use-mutations";
 import { ApiError } from "../../lib/api/client";
+import {
+  validateProviderFields,
+  EMPTY_PROVIDER_FIELDS,
+  type ProviderFields,
+} from "../../lib/validation";
 
 type Role = "customer" | "provider";
-
-interface Fields {
-  businessName: string;
-  description: string;
-  address: string;
-  email: string;
-  phone: string;
-  logoUrl: string;
-}
-
-const EMPTY_FIELDS: Fields = {
-  businessName: "",
-  description: "",
-  address: "",
-  email: "",
-  phone: "",
-  logoUrl: "",
-};
-
-function validateProviderFields(fields: Fields): Partial<Record<keyof Fields, string>> {
-  const errors: Partial<Record<keyof Fields, string>> = {};
-  if (!fields.businessName.trim()) errors.businessName = "请输入商家名称";
-  if (!fields.description.trim()) errors.description = "请输入商家简介";
-  if (!fields.address.trim()) errors.address = "请输入地址";
-  if (!fields.email.trim()) errors.email = "请输入联系邮箱";
-  return errors;
-}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -49,8 +27,8 @@ export default function Register() {
   const [role, setRole] = useState<Role>("customer");
   const [error, setError] = useState("");
 
-  const [providerFields, setProviderFields] = useState<Fields>(EMPTY_FIELDS);
-  const [providerErrors, setProviderErrors] = useState<Partial<Record<keyof Fields, string>>>({});
+  const [providerFields, setProviderFields] = useState<ProviderFields>(EMPTY_PROVIDER_FIELDS);
+  const [providerErrors, setProviderErrors] = useState<Partial<Record<keyof ProviderFields, string>>>({});
   const [interestIds, setInterestIds] = useState<number[]>([]);
 
   const registerMutation = useRegister();
@@ -62,19 +40,25 @@ export default function Register() {
     createProfileMutation.isPending ||
     setInterestsMutation.isPending;
 
+  function fieldErrors() {
+    const errs: { name?: string; email?: string; password?: string } = {};
+    if (!name.trim()) errs.name = "请输入昵称";
+    if (!email.trim()) {
+      errs.email = "请输入邮箱";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = "邮箱格式不正确";
+    }
+    if (password.length < 8) errs.password = "密码长度至少 8 位";
+    return errs;
+  }
+
   function handleNext() {
     setError("");
 
-    if (!name.trim()) {
-      setError("请输入昵称");
-      return;
-    }
-    if (!email.trim()) {
-      setError("请输入邮箱");
-      return;
-    }
-    if (password.length < 8) {
-      setError("密码长度至少 8 位");
+    const errs = fieldErrors();
+    if (Object.keys(errs).length > 0) {
+      const first = errs.name || errs.email || errs.password || "";
+      setError(first);
       return;
     }
 
@@ -117,7 +101,7 @@ export default function Register() {
       }
 
       if (role === "provider") {
-        navigate("/complete-profile", { replace: true });
+        navigate("/dashboard", { replace: true });
       } else {
         navigate("/dashboard", { replace: true });
       }
@@ -129,6 +113,12 @@ export default function Register() {
       }
     }
   }
+
+  const step1FieldErrors = fieldErrors();
+  // Only show inline errors after user has attempted to proceed (error is set)
+  const inlineErrors = error
+    ? step1FieldErrors
+    : {};
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
@@ -156,6 +146,7 @@ export default function Register() {
           password={password}
           role={role}
           error={error}
+          fieldErrors={inlineErrors}
           loading={submitting}
           onNameChange={setName}
           onEmailChange={setEmail}

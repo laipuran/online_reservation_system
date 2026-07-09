@@ -8,6 +8,7 @@ interface Props {
   password: string;
   role: Role;
   error: string;
+  fieldErrors: { name?: string; email?: string; password?: string };
   loading: boolean;
   onNameChange: (v: string) => void;
   onEmailChange: (v: string) => void;
@@ -27,6 +28,7 @@ export default function RegisterStepBasic({
   password,
   role,
   error,
+  fieldErrors,
   loading,
   onNameChange,
   onEmailChange,
@@ -51,6 +53,9 @@ export default function RegisterStepBasic({
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
           placeholder="张三"
         />
+        {fieldErrors.name && (
+          <p className="text-red-500 text-sm mt-1">{fieldErrors.name}</p>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">邮箱</label>
@@ -61,6 +66,9 @@ export default function RegisterStepBasic({
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
           placeholder="your@email.com"
         />
+        {fieldErrors.email && (
+          <p className="text-red-500 text-sm mt-1">{fieldErrors.email}</p>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">密码</label>
@@ -70,6 +78,9 @@ export default function RegisterStepBasic({
           onChange={(e) => onPasswordChange(e.target.value)}
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
         />
+        {fieldErrors.password && (
+          <p className="text-red-500 text-sm mt-1">{fieldErrors.password}</p>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium mb-3">身份</label>

@@ -19,6 +19,8 @@ interface Fields {
   description: string;
   address: string;
   email: string;
+  phone: string;
+  logoUrl: string;
 }
 
 export default function ProviderInfoForm({
@@ -107,6 +109,9 @@ export default function ProviderInfoForm({
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
           placeholder="13800000000"
         />
+        {errors.phone && (
+          <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
+        )}
       </div>
       <div>
         <label className="block text-sm font-medium mb-1">Logo URL</label>
@@ -117,6 +122,9 @@ export default function ProviderInfoForm({
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
           placeholder="https://example.com/logo.png"
         />
+        {errors.logoUrl && (
+          <p className="text-red-500 text-sm mt-1">{errors.logoUrl}</p>
+        )}
       </div>
     </div>
   );
