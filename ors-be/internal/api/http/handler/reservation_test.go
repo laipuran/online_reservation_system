@@ -27,6 +27,7 @@ type mockReservationService struct {
 	listForProviderFn    func(ctx context.Context, userID int64, status string, page, pageSize int) (*service.ReservationListResult, error)
 	confirmForProviderFn func(ctx context.Context, userID, id int64) (*model.Reservation, error)
 	rejectForProviderFn  func(ctx context.Context, userID, id int64) (*model.Reservation, error)
+	completeDueFn        func(ctx context.Context, now time.Time) (int64, error)
 }
 
 func (m *mockReservationService) Create(ctx context.Context, userID int64, input service.ReservationInput) (*model.ReservationView, error) {
@@ -55,6 +56,10 @@ func (m *mockReservationService) ConfirmForProvider(ctx context.Context, userID,
 
 func (m *mockReservationService) RejectForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error) {
 	return m.rejectForProviderFn(ctx, userID, id)
+}
+
+func (m *mockReservationService) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+	return m.completeDueFn(ctx, now)
 }
 
 // withCustomerClaims injects customer JWT claims into the request context.

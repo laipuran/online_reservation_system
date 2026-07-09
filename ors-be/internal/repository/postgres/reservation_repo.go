@@ -3,6 +3,7 @@ package postgres
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -122,6 +123,19 @@ func (r *reservationRepo) UpdateStatus(ctx context.Context, id int64, status str
 			COALESCE(note, ''), created_at, updated_at`
 
 	return scanReservation(r.pool.QueryRow(ctx, query, status, id))
+}
+
+func (r *reservationRepo) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+	query := `
+		UPDATE reservations
+		SET status = 'completed', updated_at = NOW()
+		WHERE status = 'confirmed' AND end_time <= $1`
+
+	tag, err := r.pool.Exec(ctx, query, now)
+	if err != nil {
+		return 0, err
+	}
+	return tag.RowsAffected(), nil
 }
 
 func reservationSelectSQL() string {

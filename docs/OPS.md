@@ -110,6 +110,17 @@ ors-fe:dev: ➜  Local:   http://localhost:5173/
 
 > 如果报 `command not found: turbo`，在项目根目录执行 `npm install`。
 
+### 后台任务
+
+后端进程启动后会同时启动预约自动完成任务：
+
+- 启动时立即扫描一次预约表。
+- 之后每分钟扫描一次。
+- 只会将 `status = confirmed` 且 `end_time <= now` 的预约更新为 `completed`。
+- 不会处理 `pending`、`cancelled` 或 `rejected` 状态的预约。
+
+因此部署环境需要保证后端进程常驻运行；如果后端服务停止，预约自动完成任务也会停止。
+
 ### 完整一键启动（Docker + 迁移 + 服务）
 
 ```bash

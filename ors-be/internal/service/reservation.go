@@ -47,23 +47,27 @@ type ReservationService interface {
 	ListForProvider(ctx context.Context, userID int64, status string, page, pageSize int) (*ReservationListResult, error)
 	ConfirmForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error)
 	RejectForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error)
+	CompleteDue(ctx context.Context, now time.Time) (int64, error)
 }
 
 type reservationService struct {
 	reservationRepo repository.ReservationRepository
 	serviceRepo     repository.ServiceRepository
 	providerRepo    repository.ServiceProviderRepository
+	notificationSvc NotificationService
 }
 
 func NewReservationService(
 	reservationRepo repository.ReservationRepository,
 	serviceRepo repository.ServiceRepository,
 	providerRepo repository.ServiceProviderRepository,
+	notificationSvc NotificationService,
 ) ReservationService {
 	return &reservationService{
 		reservationRepo: reservationRepo,
 		serviceRepo:     serviceRepo,
 		providerRepo:    providerRepo,
+		notificationSvc: notificationSvc,
 	}
 }
 
@@ -157,7 +161,14 @@ func (s *reservationService) CancelMine(ctx context.Context, userID, id int64) (
 	if reservation.Status != ReservationStatusPending && reservation.Status != ReservationStatusConfirmed {
 		return nil, ErrReservationCannotCancel
 	}
-	return s.updateStatus(ctx, id, ReservationStatusCancelled)
+	updated, err := s.updateStatus(ctx, id, ReservationStatusCancelled)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.notifyProviderReservationCancelled(ctx, updated); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *reservationService) ConfirmForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error) {
@@ -168,7 +179,14 @@ func (s *reservationService) ConfirmForProvider(ctx context.Context, userID, id 
 	if reservation.Status != ReservationStatusPending {
 		return nil, ErrReservationCannotConfirm
 	}
-	return s.updateStatus(ctx, id, ReservationStatusConfirmed)
+	updated, err := s.updateStatus(ctx, id, ReservationStatusConfirmed)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.createReservationNotification(ctx, updated.UserID, "预约已确认", "您的预约已确认，请按时到店。", NotificationTypeReservationConfirmed); err != nil {
+		return nil, err
+	}
+	return updated, nil
 }
 
 func (s *reservationService) RejectForProvider(ctx context.Context, userID, id int64) (*model.Reservation, error) {
@@ -179,7 +197,21 @@ func (s *reservationService) RejectForProvider(ctx context.Context, userID, id i
 	if reservation.Status != ReservationStatusPending {
 		return nil, ErrReservationCannotReject
 	}
-	return s.updateStatus(ctx, id, ReservationStatusRejected)
+	updated, err := s.updateStatus(ctx, id, ReservationStatusRejected)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.createReservationNotification(ctx, updated.UserID, "预约已拒绝", "服务提供者已拒绝您的预约。", NotificationTypeSystem); err != nil {
+		return nil, err
+	}
+	return updated, nil
+}
+
+func (s *reservationService) CompleteDue(ctx context.Context, now time.Time) (int64, error) {
+	if now.IsZero() {
+		now = time.Now()
+	}
+	return s.reservationRepo.CompleteDue(ctx, now)
 }
 
 func (s *reservationService) getForProviderUser(ctx context.Context, userID, id int64) (*model.Reservation, error) {
@@ -210,6 +242,36 @@ func (s *reservationService) updateStatus(ctx context.Context, id int64, status 
 		return nil, ErrReservationNotFound
 	}
 	return reservation, nil
+}
+
+func (s *reservationService) notifyProviderReservationCancelled(ctx context.Context, reservation *model.Reservation) error {
+	serviceItem, err := s.serviceRepo.GetByID(ctx, reservation.ServiceID)
+	if err != nil {
+		return err
+	}
+	if serviceItem == nil {
+		return ErrServiceNotFound
+	}
+
+	provider, err := s.providerRepo.GetByID(ctx, serviceItem.ProviderID)
+	if err != nil {
+		return err
+	}
+	if provider == nil {
+		return ErrProviderNotFound
+	}
+
+	return s.createReservationNotification(ctx, provider.UserID, "预约已取消", "用户已取消预约。", NotificationTypeReservationCancelled)
+}
+
+func (s *reservationService) createReservationNotification(ctx context.Context, userID int64, title, content, notificationType string) error {
+	_, err := s.notificationSvc.Create(ctx, NotificationInput{
+		UserID:  userID,
+		Title:   title,
+		Content: content,
+		Type:    notificationType,
+	})
+	return err
 }
 
 func isReservationStatusFilter(status string) bool {
