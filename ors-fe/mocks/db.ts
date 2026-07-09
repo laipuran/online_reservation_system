@@ -664,15 +664,49 @@ export function seed() {
     updated_at: now,
   });
 
-  db.review.create({
-    id: 501,
-    reservation_id: 1004,
-    user_id: 3,
-    service_id: 1,
-    rating: 5,
-    comment: "非常专业，按完之后舒服多了。",
-    created_at: now,
-  });
+  const reviewComments: Record<number, { user_id: number; rating: number; comment: string }[]> = {
+    1: [
+      { user_id: 3, rating: 5, comment: "非常专业，按完之后舒服多了。" },
+      { user_id: 1, rating: 4, comment: "环境很好，手法专业，下次还来。" },
+      { user_id: 3, rating: 5, comment: "肩颈舒服多了，老师傅手艺好！" },
+      { user_id: 1, rating: 4, comment: "价格合理，服务态度好。" },
+      { user_id: 3, rating: 5, comment: "强烈推荐，长期伏案工作者的福音" },
+      { user_id: 1, rating: 3, comment: "一般般，没有想象中好" },
+      { user_id: 3, rating: 5, comment: "按完轻松很多，会再来的" },
+    ],
+    2: [
+      { user_id: 1, rating: 5, comment: "做完皮肤明显变亮，效果很好" },
+      { user_id: 3, rating: 4, comment: "姐姐很细心，清洁很到位" },
+      { user_id: 1, rating: 5, comment: "黑头少了很多，好评" },
+      { user_id: 3, rating: 4, comment: "仪器很专业，值得尝试" },
+    ],
+    6: [
+      { user_id: 3, rating: 5, comment: "老师非常专业，一节课下来收获很多" },
+      { user_id: 1, rating: 5, comment: "环境安静，适合冥想放松" },
+      { user_id: 3, rating: 4, comment: "瑜伽课程安排合理" },
+    ],
+    9: [
+      { user_id: 1, rating: 5, comment: "全身推拿非常舒服，强烈推荐" },
+      { user_id: 3, rating: 5, comment: "90分钟彻底放松，物超所值" },
+      { user_id: 1, rating: 4, comment: "手法好，服务周到" },
+    ],
+  };
+
+  let reviewId = 500;
+  for (const [serviceId, comments] of Object.entries(reviewComments)) {
+    for (const c of comments) {
+      reviewId++;
+      db.review.create({
+        id: reviewId,
+        reservation_id: reviewId,
+        user_id: c.user_id,
+        service_id: Number(serviceId),
+        rating: c.rating,
+        comment: c.comment,
+        created_at: now,
+      });
+    }
+  }
 
   db.notification.create({
     id: 1,

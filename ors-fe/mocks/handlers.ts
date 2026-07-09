@@ -341,6 +341,45 @@ export const handlers = [
     return json(t, 201, "created");
   }),
 
+  /* ── Reviews ─────────────────────────────────────────────── */
+
+  http.get(`${API}/services/:id/reviews`, ({ params, request }) => {
+    const serviceId = Number(params.id);
+    const s = db.service.findFirst({ where: { id: { equals: serviceId } } });
+    if (!s) return err("服务不存在", 404);
+    const url = new URL(request.url);
+    const { page, pageSize, offset } = pageParams(url);
+
+    let list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
+    const total = list.length;
+    list.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    const items = list.slice(offset, offset + pageSize).map((r) => {
+      const u = db.user.findFirst({ where: { id: { equals: r.user_id } } });
+      return {
+        ...r,
+        user_name: u?.name ?? "匿名用户",
+      };
+    });
+    return json({ items, total, page, page_size: pageSize });
+  }),
+
+  http.get(`${API}/services/:id/reviews/stats`, ({ params }) => {
+    const serviceId = Number(params.id);
+    const s = db.service.findFirst({ where: { id: { equals: serviceId } } });
+    if (!s) return err("服务不存在", 404);
+    const list = db.review.findMany({ where: { service_id: { equals: serviceId } } });
+    const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    for (const r of list) {
+      distribution[r.rating] = (distribution[r.rating] ?? 0) + 1;
+    }
+    const total = list.length;
+    const avg =
+      total > 0
+        ? list.reduce((sum, r) => sum + r.rating, 0) / total
+        : s.avg_rating;
+    return json({ avg_rating: avg, total, distribution });
+  }),
+
   /* ── Reservations (provider) ────────────────────────────── */
 
   http.get(`${API}/provider/reservations`, ({ request }) => {
