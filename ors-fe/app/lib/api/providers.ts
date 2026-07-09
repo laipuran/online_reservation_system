@@ -4,11 +4,11 @@ export interface ProviderDetail {
   id: number;
   user_id: number;
   business_name: string;
-  description: string;
-  address: string;
-  phone: string;
-  email: string;
-  logo_url: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  logo_url?: string;
   created_at: string;
   updated_at: string;
 }

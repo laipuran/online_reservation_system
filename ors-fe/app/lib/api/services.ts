@@ -16,13 +16,13 @@ export interface ServiceCategory {
 export interface ServiceItem {
   id: number;
   title: string;
-  description: string;
+  description?: string;
   price: number;
   duration_minutes: number;
   avg_rating: number;
   review_count: number;
   status: ServiceStatus;
-  image_url: string;
+  image_url?: string;
   provider: ServiceProvider;
   category: ServiceCategory;
   created_at: string;
@@ -110,6 +110,16 @@ export function updateServiceStatus(
 
 export function fetchServiceTags(id: number): Promise<Tag[]> {
   return request<Tag[]>(`/services/${id}/tags`);
+}
+
+export function replaceServiceTags(
+  id: number,
+  tagIds: number[]
+): Promise<Tag[]> {
+  return request<Tag[]>(`/services/${id}/tags`, {
+    method: "PUT",
+    body: JSON.stringify({ tag_ids: tagIds }),
+  });
 }
 
 export function fetchProviderServices(

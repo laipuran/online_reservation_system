@@ -8,6 +8,7 @@ import {
   createService as createServiceApi,
   updateService as updateServiceApi,
   updateServiceStatus as updateServiceStatusApi,
+  replaceServiceTags,
   type CreateServiceInput,
   type UpdateServiceInput,
   type ServiceQueryParams,
@@ -56,6 +57,22 @@ export function useUpdateService() {
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: UpdateServiceInput }) =>
       updateServiceApi(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["provider-services"] });
+    },
+  });
+}
+
+export function useReplaceServiceTags() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      tagIds,
+    }: {
+      id: number;
+      tagIds: number[];
+    }) => replaceServiceTags(id, tagIds),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["provider-services"] });
     },

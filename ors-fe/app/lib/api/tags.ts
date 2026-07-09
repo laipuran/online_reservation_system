@@ -39,6 +39,13 @@ export async function fetchTags(): Promise<Tag[]> {
   }
 }
 
+export function createTag(name: string): Promise<Tag> {
+  return request<Tag>("/tags", {
+    method: "POST",
+    body: JSON.stringify({ name }),
+  });
+}
+
 export function setUserInterests(tagIds: number[]): Promise<Tag[]> {
   return request<Tag[]>("/users/me/interests", {
     method: "PUT",
