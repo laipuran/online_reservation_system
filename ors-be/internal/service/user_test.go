@@ -34,6 +34,30 @@ func TestUserService_GetMine_Success(t *testing.T) {
 	}
 }
 
+func TestUserService_GetByID_Success(t *testing.T) {
+	svc, _ := newTestUserService()
+
+	user, err := svc.GetByID(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("GetByID() error = %v", err)
+	}
+	if user.ID != 1 {
+		t.Errorf("GetByID() ID = %d, want 1", user.ID)
+	}
+	if user.Name != "测试用户" {
+		t.Errorf("GetByID() name = %q, want 测试用户", user.Name)
+	}
+}
+
+func TestUserService_GetByID_NotFound(t *testing.T) {
+	svc, _ := newTestUserService()
+
+	_, err := svc.GetByID(context.Background(), 999)
+	if !errors.Is(err, ErrUserNotFound) {
+		t.Errorf("GetByID() error = %v, want %v", err, ErrUserNotFound)
+	}
+}
+
 func TestUserService_UpdateMine_Success(t *testing.T) {
 	svc, _ := newTestUserService()
 

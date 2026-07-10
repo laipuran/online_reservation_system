@@ -20,9 +20,6 @@ http:
         "duration_minutes": 60,
         "image_url": "https://example.com/service.png"
       }
-<<<<<<< HEAD
-  auth: inherit
-=======
 
 runtime:
   scripts:
@@ -34,7 +31,6 @@ runtime:
           bru.setEnvVar("service_id", String(serviceId), { persist: true });
           bru.setVar("service_id", String(serviceId));
         }
->>>>>>> origin/master
 
 settings:
   encodeUrl: true

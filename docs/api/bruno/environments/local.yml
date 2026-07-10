@@ -2,6 +2,8 @@ name: local
 variables:
   - name: customer_token
     value: ""
+  - name: customer_user_id
+    value: ""
   - name: provider_token
     value: ""
   - name: service_id

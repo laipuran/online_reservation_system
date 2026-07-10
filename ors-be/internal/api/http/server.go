@@ -45,6 +45,7 @@ func NewServer(
 	r.Route("/api/v1", func(r chi.Router) {
 		r.Post("/auth/register", authH.Register())
 		r.Post("/auth/login", authH.Login())
+		r.Get("/users/{id}", userH.GetByID())
 		r.Get("/categories", categoryH.List())
 		r.Get("/providers/{id}", providerH.GetByID())
 		r.Get("/providers/{id}/services", serviceH.ListByProvider())
