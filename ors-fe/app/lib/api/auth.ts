@@ -12,6 +12,10 @@ export function register(
   });
 }
 
+export function checkEmail(email: string): Promise<{ exists: boolean }> {
+  return request<{ exists: boolean }>(`/auth/check-email?email=${encodeURIComponent(email)}`);
+}
+
 export function login(email: string, password: string): Promise<AuthData> {
   return request<AuthData>("/auth/login", {
     method: "POST",

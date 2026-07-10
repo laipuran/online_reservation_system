@@ -3,9 +3,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
-import {
-  fetchServiceReviews,
-} from "../../lib/api/reviews";
+import { fetchServiceReviews } from "../../lib/api/reviews";
 import { useAuth } from "../../lib/hooks/use-auth";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {
@@ -87,6 +85,7 @@ export default function ServiceDetail() {
   const [note, setNote] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [keyword, setKeyword] = useState("");
+  const [bookingError, setBookingError] = useState("");
 
   const { data: service, isLoading: serviceLoading } = useQuery({
     queryKey: ["service", serviceId],
@@ -100,9 +99,10 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
+  const REVIEW_PAGE_SIZE = 5;
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
-    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: 5 }],
-    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: 5 }),
+    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }],
+    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }),
     enabled: !!serviceId,
   });
 
@@ -127,25 +127,43 @@ export default function ServiceDetail() {
     );
   }
 
-  const reviews = reviewsData?.items ?? [];
-  const reviewsTotal = reviewsData?.total ?? reviews.length;
-  const reviewsPageSize = 5;
-  const totalReviewPages = Math.max(1, Math.ceil(reviewsTotal / reviewsPageSize));
+  const allReviews = reviewsData?.items ?? [];
+  const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
+  const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
 
   const handleBooking = () => {
+    setBookingError("");
     if (!token) {
       navigate(`/login?redirect=/services/${serviceId}`);
       return;
     }
     if (!bookDate || !bookTime) {
-      alert("请选择预约日期和时间");
+      setBookingError("请选择预约日期和时间");
       return;
     }
+
     const selected = new Date(`${bookDate}T${bookTime}:00`);
-    if (selected <= new Date()) {
-      alert("预约时间必须在当前时间之后");
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(bookDate + "T00:00:00");
+
+    if (selectedDate < today) {
+      setBookingError("预约日期不能早于今天");
       return;
     }
+
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    if (selectedDate > threeMonthsLater) {
+      setBookingError("预约时间不能超过三个月后");
+      return;
+    }
+
+    if (selectedDate.getTime() === today.getTime() && selected <= now) {
+      setBookingError("预约时间不能早于当前时间");
+      return;
+    }
+
     const params = new URLSearchParams({ date: bookDate, time: bookTime });
     if (note) params.set("note", note);
     navigate(`/services/${serviceId}/confirm?${params.toString()}`);
@@ -159,6 +177,9 @@ export default function ServiceDetail() {
 
   const now = new Date();
   const minDate = now.toISOString().split("T")[0];
+  const maxDateObj = new Date();
+  maxDateObj.setMonth(maxDateObj.getMonth() + 3);
+  const maxDate = maxDateObj.toISOString().split("T")[0];
   const endTime = bookDate && bookTime
     ? new Date(`${bookDate}T${bookTime}:00`).getTime() + service.duration_minutes * 60000
     : null;
@@ -237,18 +258,17 @@ export default function ServiceDetail() {
             <p className="text-sm text-gray-600 leading-relaxed">{service.description}</p>
           </div>
 
-            <div>
-              <h3 className="font-semibold text-gray-900 mb-4">用户评价</h3>
-              {reviewsTotal > 0 && (
-                <div className="flex gap-8 mb-6 p-4 bg-gray-50 rounded-xl">
-                  <div className="text-center shrink-0">
-                    <p className="text-4xl font-bold text-gray-900">{service.avg_rating.toFixed(1)}</p>
-                    <StarRating rating={service.avg_rating} size="sm" />
-                    <p className="text-xs text-gray-400 mt-1">{service.review_count} 条评价</p>
-                  </div>
+          <div>
+            <h3 className="font-semibold text-gray-900 mb-4">用户评价</h3>
+            {allReviews.length > 0 && (
+              <div className="flex gap-8 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                <div className="text-center shrink-0">
+                  <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{service.avg_rating.toFixed(1)}</p>
+                  <StarRating rating={service.avg_rating} size="sm" />
+                  <p className="text-xs text-gray-400 mt-1">{service.review_count} 条评价</p>
                 </div>
-              )}
-
+              </div>
+            )}
             {reviewsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -263,10 +283,10 @@ export default function ServiceDetail() {
                   <div key={review.id} className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        ユ
+                        U
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">用户 #{review.user_id}</p>
+                        <p className="text-sm font-medium text-gray-900">用户 {review.user_id}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
                           <span className="text-xs text-gray-400">
@@ -278,7 +298,7 @@ export default function ServiceDetail() {
                     <p className="text-sm text-gray-600 ml-11">{review.comment || ""}</p>
                   </div>
                 ))}
-                {totalReviewPages > 1 && (
+                {allReviews.length > 0 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button
                       onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
@@ -287,12 +307,10 @@ export default function ServiceDetail() {
                     >
                       上一页
                     </button>
-                    <span className="text-sm text-gray-400">
-                      {reviewPage} / {totalReviewPages}
-                    </span>
+                    <span className="text-sm text-gray-400">第 {reviewPage} 页</span>
                     <button
-                      onClick={() => setReviewPage((p) => Math.min(totalReviewPages, p + 1))}
-                      disabled={reviewPage >= totalReviewPages}
+                      onClick={() => setReviewPage((p) => p + 1)}
+                      disabled={!hasMoreReviews}
                       className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
                     >
                       下一页
@@ -316,8 +334,9 @@ export default function ServiceDetail() {
               <input
                 type="date"
                 value={bookDate}
-                onChange={(e) => setBookDate(e.target.value)}
+                onChange={(e) => { setBookingError(""); setBookDate(e.target.value); }}
                 min={minDate}
+                max={maxDate}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
               />
 
@@ -325,7 +344,7 @@ export default function ServiceDetail() {
               <input
                 type="time"
                 value={bookTime}
-                onChange={(e) => setBookTime(e.target.value)}
+                onChange={(e) => { setBookingError(""); setBookTime(e.target.value); }}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
               />
 
@@ -343,6 +362,10 @@ export default function ServiceDetail() {
                 rows={3}
                 className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800 dark:text-gray-100"
               />
+
+              {bookingError && (
+                <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+              )}
 
               <button
                 onClick={handleBooking}

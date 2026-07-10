@@ -3,7 +3,7 @@ import { request } from "./client";
 export interface CreateReviewInput {
   reservation_id: number;
   rating: number;
-  comment: string;
+  comment?: string;
 }
 
 export interface ReviewItem {
@@ -20,7 +20,6 @@ export interface ReviewListResponse {
   items: ReviewItem[];
   page: number;
   page_size: number;
-  total?: number;
 }
 
 export function createReview(data: CreateReviewInput): Promise<ReviewItem> {

@@ -161,9 +161,9 @@ export default function Dashboard() {
             <ReservationCard
               key={r.id}
               id={r.id}
-              serviceTitle={r.service.title}
-              serviceId={r.service.id}
-              providerName={r.service.provider.business_name}
+              serviceTitle={r.service?.title ?? `服务 #${r.service?.id}`}
+              serviceId={r.service?.id ?? 0}
+              providerName={r.service?.provider.business_name ?? "未知商家"}
               startTime={r.start_time}
               endTime={r.end_time}
               status={r.status}

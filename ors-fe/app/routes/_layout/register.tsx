@@ -9,40 +9,15 @@ import {
   useSetUserInterests,
 } from "../../lib/hooks/use-mutations";
 import { ApiError } from "../../lib/api/client";
+import { checkEmail } from "../../lib/api/auth";
+import {
+  validateProviderFields,
+  EMPTY_PROVIDER_FIELDS,
+  type ProviderFields,
+} from "../../lib/validation";
 
 type Role = "customer" | "provider";
 
-interface Fields {
-  businessName: string;
-  description: string;
-  address: string;
-  email: string;
-  phone: string;
-  logoUrl: string;
-}
-
-const EMPTY_FIELDS: Fields = {
-  businessName: "",
-  description: "",
-  address: "",
-  email: "",
-  phone: "",
-  logoUrl: "",
-};
-
-const PHONE_REGEX = /^1[3-9]\d{9}$/;
-
-function validateProviderFields(fields: Fields): Partial<Record<keyof Fields, string>> {
-  const errors: Partial<Record<keyof Fields, string>> = {};
-  if (!fields.businessName.trim()) errors.businessName = "请输入商家名称";
-  if (!fields.description.trim()) errors.description = "请输入商家简介";
-  if (!fields.address.trim()) errors.address = "请输入地址";
-  if (!fields.email.trim()) errors.email = "请输入联系邮箱";
-  if (fields.phone.trim() && !PHONE_REGEX.test(fields.phone.trim())) {
-    errors.phone = "手机号格式不正确";
-  }
-  return errors;
-}
 
 export default function Register() {
   const navigate = useNavigate();
@@ -53,9 +28,12 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("customer");
   const [error, setError] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
+  const [emailExistsErr, setEmailExistsErr] = useState(false);
 
-  const [providerFields, setProviderFields] = useState<Fields>(EMPTY_FIELDS);
-  const [providerErrors, setProviderErrors] = useState<Partial<Record<keyof Fields, string>>>({});
+  const [providerFields, setProviderFields] = useState<ProviderFields>(EMPTY_PROVIDER_FIELDS);
+  const [providerErrors, setProviderErrors] = useState<Partial<Record<keyof ProviderFields, string>>>({});
   const [interestIds, setInterestIds] = useState<number[]>([]);
 
   const registerMutation = useRegister();
@@ -67,20 +45,40 @@ export default function Register() {
     createProfileMutation.isPending ||
     setInterestsMutation.isPending;
 
-  function handleNext() {
-    setError("");
-
-    if (!name.trim()) {
-      setError("请输入昵称");
-      return;
-    }
+  function fieldErrors() {
+    const errs: { name?: string; email?: string; password?: string } = {};
+    if (!name.trim()) errs.name = "请输入昵称";
     if (!email.trim()) {
-      setError("请输入邮箱");
+      errs.email = "请输入邮箱";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      errs.email = "邮箱格式不正确";
+    }
+    if (password.length < 8) errs.password = "密码长度至少 8 位";
+    return errs;
+  }
+
+  async function handleNext() {
+    setError("");
+    setSubmitted(true);
+
+    const errs = fieldErrors();
+    if (Object.keys(errs).length > 0) {
       return;
     }
-    if (password.length < 8) {
-      setError("密码长度至少 8 位");
+
+    setCheckingEmail(true);
+    setEmailExistsErr(false);
+    try {
+      const { exists } = await checkEmail(email.trim());
+      if (exists) {
+        setEmailExistsErr(true);
+        return;
+      }
+    } catch {
+      setError("无法验证邮箱，请稍后重试");
       return;
+    } finally {
+      setCheckingEmail(false);
     }
 
     setStep(2);
@@ -131,6 +129,13 @@ export default function Register() {
     }
   }
 
+  const step1FieldErrors = fieldErrors();
+  const inlineErrors = submitted
+    ? emailExistsErr
+      ? { ...step1FieldErrors, email: "该邮箱已被注册" }
+      : step1FieldErrors
+    : {};
+
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
       <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">注册</h1>
@@ -157,9 +162,10 @@ export default function Register() {
           password={password}
           role={role}
           error={error}
-          loading={submitting}
-          onNameChange={setName}
-          onEmailChange={setEmail}
+          fieldErrors={inlineErrors}
+          loading={submitting || checkingEmail}
+          onNameChange={(v) => { setSubmitted(false); setName(v); }}
+          onEmailChange={(v) => { setEmailExistsErr(false); setEmail(v); }}
           onPasswordChange={setPassword}
           onRoleChange={setRole}
           onNext={handleNext}

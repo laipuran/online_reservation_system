@@ -20,7 +20,7 @@ export function useCreateReview() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateReviewInput) => createReviewApi(data),
-    onSuccess: (_, vars) => {
+    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["my-reservations"] });
       qc.invalidateQueries({ queryKey: ["service-reviews"] });
     },

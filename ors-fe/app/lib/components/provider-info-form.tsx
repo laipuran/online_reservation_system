@@ -20,6 +20,7 @@ interface Fields {
   address: string;
   email: string;
   phone: string;
+  logoUrl: string;
 }
 
 export default function ProviderInfoForm({
@@ -121,6 +122,9 @@ export default function ProviderInfoForm({
           className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           placeholder="https://example.com/logo.png"
         />
+        {errors.logoUrl && (
+          <p className="text-red-500 text-sm mt-1">{errors.logoUrl}</p>
+        )}
       </div>
     </div>
   );

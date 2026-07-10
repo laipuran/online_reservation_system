@@ -118,12 +118,12 @@ export default function ServicesPage() {
               key={s.id}
               id={s.id}
               title={s.title}
-              description={s.description}
+              description={s.description ?? ""}
               price={s.price}
               durationMinutes={s.duration_minutes}
               avgRating={s.avg_rating}
-              imageUrl={s.image_url}
-              status={s.status}
+              imageUrl={s.image_url ?? ""}
+              status={s.status ?? "active"}
             />
           ))}
         </div>
@@ -138,12 +138,12 @@ export default function ServicesPage() {
                 key={s.id}
                 id={s.id}
                 title={s.title}
-                description={s.description}
+                description={s.description ?? ""}
                 price={s.price}
                 durationMinutes={s.duration_minutes}
                 avgRating={s.avg_rating}
-                imageUrl={s.image_url}
-                status={s.status}
+                imageUrl={s.image_url ?? ""}
+                status={s.status ?? "active"}
               />
             ))}
           </div>
