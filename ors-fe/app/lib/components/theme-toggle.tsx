@@ -23,6 +23,7 @@ export function ThemeToggle() {
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, theme);
+    applyTheme(theme);
   }, [theme]);
 
   function toggle() {
