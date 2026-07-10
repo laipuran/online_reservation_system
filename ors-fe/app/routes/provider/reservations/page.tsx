@@ -151,7 +151,7 @@ export default function ProviderReservationsPage() {
                           <button
                             onClick={() => rejectMutation.mutate(r.id)}
                             disabled={rejectMutation.isPending}
-                            className="text-red-500 hover:underline text-xs disabled:opacity-40"
+                            className="text-red-500 dark:text-red-400 hover:underline text-xs disabled:opacity-40"
                           >
                             拒绝
                           </button>

@@ -113,7 +113,7 @@ export default function ProviderServicesPage() {
                       {s.status !== "inactive" && (
                         <button
                           onClick={() => setDeletingId(s.id)}
-                          className="text-red-500 hover:underline text-xs"
+                          className="text-red-500 dark:text-red-400 hover:underline text-xs"
                         >
                           删除
                         </button>
