@@ -20,18 +20,54 @@ func NewReviewRepo(pool *pgxpool.Pool) repository.ReviewRepository {
 }
 
 func (r *reviewRepo) Create(ctx context.Context, review *model.Review) error {
+	return r.CreateAndRefreshServiceRating(ctx, review)
+}
+
+func (r *reviewRepo) CreateAndRefreshServiceRating(ctx context.Context, review *model.Review) error {
+	tx, err := r.pool.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+
+	var serviceID int64
+	if err := tx.QueryRow(ctx, `SELECT id FROM services WHERE id = $1 FOR UPDATE`, review.ServiceID).Scan(&serviceID); err != nil {
+		return err
+	}
+
 	query := `
 		INSERT INTO reviews (reservation_id, user_id, service_id, rating, comment, created_at)
 		VALUES ($1, $2, $3, $4, $5, NOW())
 		RETURNING id, created_at`
-
-	return r.pool.QueryRow(ctx, query,
+	if err := tx.QueryRow(ctx, query,
 		review.ReservationID,
 		review.UserID,
 		review.ServiceID,
 		review.Rating,
 		nullableString(review.Comment),
-	).Scan(&review.ID, &review.CreatedAt)
+	).Scan(&review.ID, &review.CreatedAt); err != nil {
+		return err
+	}
+
+	updateQuery := `
+		UPDATE services
+		SET avg_rating = COALESCE((
+				SELECT AVG(rating)::DOUBLE PRECISION
+				FROM reviews
+				WHERE service_id = $1
+			), 0),
+			review_count = (
+				SELECT COUNT(*)
+				FROM reviews
+				WHERE service_id = $1
+			),
+			updated_at = NOW()
+		WHERE id = $1`
+	if _, err := tx.Exec(ctx, updateQuery, review.ServiceID); err != nil {
+		return err
+	}
+
+	return tx.Commit(ctx)
 }
 
 func (r *reviewRepo) GetByID(ctx context.Context, id int64) (*model.Review, error) {

@@ -10,13 +10,28 @@ import (
 )
 
 type mockReviewRepo struct {
-	reviews        []*model.Review
-	existingReview *model.Review
-	createdReview  *model.Review
-	err            error
+	reviews                     []*model.Review
+	existingReview              *model.Review
+	createdReview               *model.Review
+	createAndRefreshRatingCalls int
+	createAndRefreshRatingErr   error
+	err                         error
 }
 
 func (m *mockReviewRepo) Create(ctx context.Context, review *model.Review) error {
+	if m.err != nil {
+		return m.err
+	}
+	review.ID = 1
+	m.createdReview = review
+	return nil
+}
+
+func (m *mockReviewRepo) CreateAndRefreshServiceRating(ctx context.Context, review *model.Review) error {
+	m.createAndRefreshRatingCalls++
+	if m.createAndRefreshRatingErr != nil {
+		return m.createAndRefreshRatingErr
+	}
 	if m.err != nil {
 		return m.err
 	}
@@ -172,19 +187,27 @@ func TestReviewService_Create_Success(t *testing.T) {
 	if reviewRepo.createdReview == nil {
 		t.Fatal("Create() did not call review repo")
 	}
+	if reviewRepo.createAndRefreshRatingCalls != 1 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 1", reviewRepo.createAndRefreshRatingCalls)
+	}
 }
 
 func TestReviewService_Create_ReservationNotFound(t *testing.T) {
-	svc := NewReviewService(&mockReviewRepo{}, &mockReviewReservationRepo{})
+	reviewRepo := &mockReviewRepo{}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{})
 
 	_, err := svc.Create(context.Background(), 1, ReviewInput{ReservationID: 10, Rating: 5})
 	if !errors.Is(err, ErrReviewReservationNotFound) {
 		t.Errorf("Create() error = %v, want %v", err, ErrReviewReservationNotFound)
 	}
+	if reviewRepo.createAndRefreshRatingCalls != 0 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 0", reviewRepo.createAndRefreshRatingCalls)
+	}
 }
 
 func TestReviewService_Create_ReservationForbidden(t *testing.T) {
-	svc := NewReviewService(&mockReviewRepo{}, &mockReviewReservationRepo{
+	reviewRepo := &mockReviewRepo{}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{
 		reservation: &model.Reservation{ID: 10, UserID: 2, ServiceID: 3, Status: ReservationStatusCompleted},
 	})
 
@@ -192,10 +215,14 @@ func TestReviewService_Create_ReservationForbidden(t *testing.T) {
 	if !errors.Is(err, ErrReviewForbidden) {
 		t.Errorf("Create() error = %v, want %v", err, ErrReviewForbidden)
 	}
+	if reviewRepo.createAndRefreshRatingCalls != 0 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 0", reviewRepo.createAndRefreshRatingCalls)
+	}
 }
 
 func TestReviewService_Create_ReservationNotCompleted(t *testing.T) {
-	svc := NewReviewService(&mockReviewRepo{}, &mockReviewReservationRepo{
+	reviewRepo := &mockReviewRepo{}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{
 		reservation: &model.Reservation{ID: 10, UserID: 1, ServiceID: 3, Status: ReservationStatusConfirmed},
 	})
 
@@ -203,12 +230,16 @@ func TestReviewService_Create_ReservationNotCompleted(t *testing.T) {
 	if !errors.Is(err, ErrReviewReservationNotDone) {
 		t.Errorf("Create() error = %v, want %v", err, ErrReviewReservationNotDone)
 	}
+	if reviewRepo.createAndRefreshRatingCalls != 0 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 0", reviewRepo.createAndRefreshRatingCalls)
+	}
 }
 
 func TestReviewService_Create_AlreadyExists(t *testing.T) {
-	svc := NewReviewService(&mockReviewRepo{
+	reviewRepo := &mockReviewRepo{
 		existingReview: &model.Review{ID: 99, ReservationID: 10},
-	}, &mockReviewReservationRepo{
+	}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{
 		reservation: &model.Reservation{ID: 10, UserID: 1, ServiceID: 3, Status: ReservationStatusCompleted},
 	})
 
@@ -216,13 +247,42 @@ func TestReviewService_Create_AlreadyExists(t *testing.T) {
 	if !errors.Is(err, ErrReviewAlreadyExists) {
 		t.Errorf("Create() error = %v, want %v", err, ErrReviewAlreadyExists)
 	}
+	if reviewRepo.createAndRefreshRatingCalls != 0 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 0", reviewRepo.createAndRefreshRatingCalls)
+	}
 }
 
 func TestReviewService_Create_InvalidRating(t *testing.T) {
-	svc := NewReviewService(&mockReviewRepo{}, &mockReviewReservationRepo{})
+	reviewRepo := &mockReviewRepo{}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{})
 
 	_, err := svc.Create(context.Background(), 1, ReviewInput{ReservationID: 10, Rating: 6})
 	if !errors.Is(err, ErrReviewInvalidRating) {
 		t.Errorf("Create() error = %v, want %v", err, ErrReviewInvalidRating)
+	}
+	if reviewRepo.createAndRefreshRatingCalls != 0 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 0", reviewRepo.createAndRefreshRatingCalls)
+	}
+}
+
+func TestReviewService_Create_RatingRefreshFailure(t *testing.T) {
+	repoErr := errors.New("rating refresh failed")
+	reviewRepo := &mockReviewRepo{createAndRefreshRatingErr: repoErr}
+	svc := NewReviewService(reviewRepo, &mockReviewReservationRepo{
+		reservation: &model.Reservation{ID: 10, UserID: 1, ServiceID: 3, Status: ReservationStatusCompleted},
+	})
+
+	review, err := svc.Create(context.Background(), 1, ReviewInput{ReservationID: 10, Rating: 5})
+	if !errors.Is(err, repoErr) {
+		t.Fatalf("Create() error = %v, want %v", err, repoErr)
+	}
+	if review != nil {
+		t.Fatalf("Create() review = %+v, want nil", review)
+	}
+	if reviewRepo.createAndRefreshRatingCalls != 1 {
+		t.Fatalf("CreateAndRefreshServiceRating() calls = %d, want 1", reviewRepo.createAndRefreshRatingCalls)
+	}
+	if reviewRepo.createdReview != nil {
+		t.Fatalf("createdReview = %+v, want nil on refresh failure", reviewRepo.createdReview)
 	}
 }
