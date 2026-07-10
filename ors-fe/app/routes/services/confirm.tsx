@@ -43,7 +43,7 @@ export default function ConfirmPage() {
   if (authLoading) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <p className="text-gray-400">加载中...</p>
+        <p className="text-gray-400 dark:text-gray-500">加载中...</p>
       </div>
     );
   }
@@ -57,9 +57,9 @@ export default function ConfirmPage() {
     return (
       <div className="max-w-lg mx-auto px-4 py-20">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-gray-200 rounded w-48" />
-          <div className="h-40 bg-gray-200 rounded-xl" />
-          <div className="h-10 bg-gray-200 rounded-lg" />
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-48" />
+          <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg" />
         </div>
       </div>
     );
@@ -68,8 +68,8 @@ export default function ConfirmPage() {
   if (!service) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <p className="text-gray-500">服务不存在</p>
-        <Link to="/services" className="text-blue-600 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
+        <p className="text-gray-500 dark:text-gray-400">服务不存在</p>
+        <Link to="/services" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
       </div>
     );
   }
@@ -77,9 +77,9 @@ export default function ConfirmPage() {
   if (!date || !time) {
     return (
       <div className="max-w-lg mx-auto px-4 py-20 text-center">
-        <p className="text-amber-600 mb-2">缺少预约时间信息</p>
-        <p className="text-sm text-gray-400 mb-4">请从服务详情页选择时间后再来确认</p>
-        <Link to={`/services/${serviceId}`} className="text-blue-600 hover:underline">&larr; 返回服务详情</Link>
+        <p className="text-amber-600 dark:text-amber-400 mb-2">缺少预约时间信息</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">请从服务详情页选择时间后再来确认</p>
+        <Link to={`/services/${serviceId}`} className="text-blue-600 dark:text-blue-400 hover:underline">&larr; 返回服务详情</Link>
       </div>
     );
   }
@@ -97,11 +97,11 @@ export default function ConfirmPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-8">
-      <Link to={`/services/${serviceId}`} className="text-sm text-blue-600 hover:underline">
+      <Link to={`/services/${serviceId}`} className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
         &larr; 返回服务详情
       </Link>
 
-      <h1 className="text-xl font-bold text-gray-900 mt-4 mb-6">确认预约信息</h1>
+      <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 mt-4 mb-6">确认预约信息</h1>
 
       <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-5 space-y-4">
@@ -109,43 +109,43 @@ export default function ConfirmPage() {
             {service.image_url ? (
               <img src={service.image_url} alt={service.title} className="w-20 h-20 rounded-lg object-cover shrink-0" />
             ) : (
-              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center text-2xl shrink-0">
+              <div className="w-20 h-20 rounded-lg bg-gradient-to-br from-blue-50 dark:from-blue-900/30 to-indigo-100 dark:to-indigo-900/30 flex items-center justify-center text-2xl shrink-0">
                 💆
               </div>
             )}
             <div>
-              <h2 className="font-semibold text-gray-900">{service.title}</h2>
-              <p className="text-sm text-gray-500 mt-0.5">{service.provider.business_name}</p>
-              <p className="text-2xl font-bold text-red-500 mt-1">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">{service.title}</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{service.provider.business_name}</p>
+              <p className="text-2xl font-bold text-red-500 dark:text-red-400 mt-1">
                 <span className="text-sm">¥</span>{service.price}
               </p>
             </div>
           </div>
 
-          <div className="border-t border-gray-100 pt-4 space-y-3 text-sm">
+          <div className="border-t border-gray-100 dark:border-gray-700 pt-4 space-y-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-500">预约日期</span>
-              <span className="text-gray-900 font-medium">{formatDate(startDateTime)}</span>
+              <span className="text-gray-500 dark:text-gray-400">预约日期</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">{formatDate(startDateTime)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">服务时段</span>
-              <span className="text-gray-900 font-medium">
+              <span className="text-gray-500 dark:text-gray-400">服务时段</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">
                 {formatTime(startDateTime)} — {formatTime(endDateTime)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-500">服务时长</span>
-              <span className="text-gray-900 font-medium">{service.duration_minutes} 分钟</span>
+              <span className="text-gray-500 dark:text-gray-400">服务时长</span>
+              <span className="text-gray-900 dark:text-gray-100 font-medium">{service.duration_minutes} 分钟</span>
             </div>
             {note && (
               <div className="flex justify-between">
-                <span className="text-gray-500">备注</span>
-                <span className="text-gray-900 font-medium max-w-[200px] text-right">{note}</span>
+                <span className="text-gray-500 dark:text-gray-400">备注</span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium max-w-[200px] text-right">{note}</span>
               </div>
             )}
-            <div className="flex justify-between border-t border-gray-100 pt-3">
-              <span className="text-gray-900 font-semibold">合计</span>
-              <span className="text-xl font-bold text-red-500">¥{service.price}</span>
+            <div className="flex justify-between border-t border-gray-100 dark:border-gray-700 pt-3">
+              <span className="text-gray-900 dark:text-gray-100 font-semibold">合计</span>
+              <span className="text-xl font-bold text-red-500 dark:text-red-400">¥{service.price}</span>
             </div>
           </div>
         </div>
@@ -159,7 +159,7 @@ export default function ConfirmPage() {
         {bookingMutation.isPending ? "提交中..." : "确认并支付"}
       </button>
 
-      <p className="text-xs text-gray-400 text-center mt-3">
+      <p className="text-xs text-gray-400 dark:text-gray-500 text-center mt-3">
         * 模拟支付，不会产生真实扣款
       </p>
     </div>
