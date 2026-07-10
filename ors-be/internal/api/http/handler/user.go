@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"ors-be/internal/api/http/middleware"
 	"ors-be/internal/api/http/response"
@@ -14,8 +15,38 @@ type UserHandler struct {
 	userSvc service.UserService
 }
 
+type publicUserResponse struct {
+	ID        int64     `json:"id"`
+	Name      string    `json:"name"`
+	AvatarURL string    `json:"avatar_url"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 func NewUserHandler(userSvc service.UserService) *UserHandler {
 	return &UserHandler{userSvc: userSvc}
+}
+
+func (h *UserHandler) GetByID() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := parseIDParam(r, "id", "无效的用户ID")
+		if err != nil {
+			response.JSON(w, http.StatusBadRequest, response.Fail(err.Error()))
+			return
+		}
+
+		user, err := h.userSvc.GetByID(r.Context(), id)
+		if err != nil {
+			writeUserError(w, err)
+			return
+		}
+
+		response.JSON(w, http.StatusOK, response.OK(publicUserResponse{
+			ID:        user.ID,
+			Name:      user.Name,
+			AvatarURL: user.AvatarURL,
+			CreatedAt: user.CreatedAt,
+		}))
+	}
 }
 
 func (h *UserHandler) GetMine() http.HandlerFunc {

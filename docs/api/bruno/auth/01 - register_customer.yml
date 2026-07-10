@@ -27,6 +27,11 @@ runtime:
           bru.setEnvVar("customer_token", token, { persist: true });
           bru.setVar("customer_token", token);
         }
+        const userId = body && body.data && body.data.user && body.data.user.id;
+        if (userId) {
+          bru.setEnvVar("customer_user_id", String(userId), { persist: true });
+          bru.setVar("customer_user_id", String(userId));
+        }
 
 settings:
   encodeUrl: true
