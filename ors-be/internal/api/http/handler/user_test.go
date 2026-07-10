@@ -15,9 +15,14 @@ import (
 )
 
 type mockUserService struct {
+	getByIDFn        func(ctx context.Context, id int64) (*model.User, error)
 	getMineFn        func(ctx context.Context, userID int64) (*model.User, error)
 	updateMineFn     func(ctx context.Context, userID int64, input service.UserInput) (*model.User, error)
 	updatePasswordFn func(ctx context.Context, userID int64, input service.UserPasswordInput) error
+}
+
+func (m *mockUserService) GetByID(ctx context.Context, id int64) (*model.User, error) {
+	return m.getByIDFn(ctx, id)
 }
 
 func (m *mockUserService) GetMine(ctx context.Context, userID int64) (*model.User, error) {
@@ -39,6 +44,99 @@ func stubUser() *model.User {
 		Phone:     "13800138000",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
+	}
+}
+
+// ────── GetByID ──────
+
+func TestUserHandler_GetByID_Success_ReturnsOnlyPublicFields(t *testing.T) {
+	createdAt := time.Date(2026, 7, 10, 9, 0, 0, 0, time.UTC)
+	svc := &mockUserService{
+		getByIDFn: func(_ context.Context, id int64) (*model.User, error) {
+			return &model.User{
+				ID:           id,
+				Name:         "公开用户",
+				Email:        "private@example.com",
+				PasswordHash: "secret-hash",
+				Role:         "provider",
+				Phone:        "13800138000",
+				AvatarURL:    "https://example.com/avatar.png",
+				CreatedAt:    createdAt,
+			}, nil
+		},
+	}
+	h := NewUserHandler(svc)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/1", nil)
+	req = withChiURLParam(req, "id", "1")
+	w := httptest.NewRecorder()
+
+	h.GetByID()(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("status = %d, want %d", w.Code, http.StatusOK)
+	}
+
+	var resp struct {
+		Code int             `json:"code"`
+		Data json.RawMessage `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if resp.Code != http.StatusOK {
+		t.Errorf("code = %d, want %d", resp.Code, http.StatusOK)
+	}
+
+	var data map[string]json.RawMessage
+	if err := json.Unmarshal(resp.Data, &data); err != nil {
+		t.Fatalf("decode public data: %v", err)
+	}
+	for _, privateField := range []string{"email", "role", "phone", "password_hash", "updated_at"} {
+		if _, exists := data[privateField]; exists {
+			t.Errorf("public response must not contain %q", privateField)
+		}
+	}
+	if _, exists := data["id"]; !exists {
+		t.Error("public response must contain id")
+	}
+	if _, exists := data["name"]; !exists {
+		t.Error("public response must contain name")
+	}
+	if _, exists := data["avatar_url"]; !exists {
+		t.Error("public response must contain avatar_url")
+	}
+	if _, exists := data["created_at"]; !exists {
+		t.Error("public response must contain created_at")
+	}
+}
+
+func TestUserHandler_GetByID_InvalidID(t *testing.T) {
+	h := NewUserHandler(&mockUserService{})
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/invalid", nil)
+	req = withChiURLParam(req, "id", "invalid")
+	w := httptest.NewRecorder()
+
+	h.GetByID()(w, req)
+	if w.Code != http.StatusBadRequest {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusBadRequest)
+	}
+}
+
+func TestUserHandler_GetByID_NotFound(t *testing.T) {
+	svc := &mockUserService{
+		getByIDFn: func(_ context.Context, _ int64) (*model.User, error) {
+			return nil, service.ErrUserNotFound
+		},
+	}
+	h := NewUserHandler(svc)
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/users/999", nil)
+	req = withChiURLParam(req, "id", "999")
+	w := httptest.NewRecorder()
+
+	h.GetByID()(w, req)
+	if w.Code != http.StatusNotFound {
+		t.Errorf("status = %d, want %d", w.Code, http.StatusNotFound)
 	}
 }
 

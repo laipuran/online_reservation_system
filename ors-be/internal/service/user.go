@@ -27,6 +27,7 @@ type UserPasswordInput struct {
 }
 
 type UserService interface {
+	GetByID(ctx context.Context, id int64) (*model.User, error)
 	GetMine(ctx context.Context, userID int64) (*model.User, error)
 	UpdateMine(ctx context.Context, userID int64, input UserInput) (*model.User, error)
 	UpdatePassword(ctx context.Context, userID int64, input UserPasswordInput) error
@@ -41,8 +42,8 @@ func NewUserService(userRepo repository.UserRepository, hasher auth.Hasher) User
 	return &userService{userRepo: userRepo, hasher: hasher}
 }
 
-func (s *userService) GetMine(ctx context.Context, userID int64) (*model.User, error) {
-	user, err := s.userRepo.GetByID(ctx, userID)
+func (s *userService) GetByID(ctx context.Context, id int64) (*model.User, error) {
+	user, err := s.userRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -50,6 +51,10 @@ func (s *userService) GetMine(ctx context.Context, userID int64) (*model.User, e
 		return nil, ErrUserNotFound
 	}
 	return user, nil
+}
+
+func (s *userService) GetMine(ctx context.Context, userID int64) (*model.User, error) {
+	return s.GetByID(ctx, userID)
 }
 
 func (s *userService) UpdateMine(ctx context.Context, userID int64, input UserInput) (*model.User, error) {

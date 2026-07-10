@@ -1,5 +1,42 @@
 # 用户模块
 
+## GET /api/v1/users/{id}
+
+根据用户 ID 获取用户公开信息（头像、昵称等）。
+
+### 认证
+
+不需要认证，公开接口。
+
+### 成功响应 (200)
+
+```json
+{
+  "code": 200,
+  "message": "ok",
+  "data": {
+    "id": 1,
+    "name": "张三",
+    "avatar_url": "https://example.com/avatar.png",
+    "created_at": "2026-07-07T09:00:00Z"
+  }
+}
+```
+
+### 错误响应
+
+| 场景 | HTTP 状态码 | message |
+|------|-------------|---------|
+| 用户不存在 | 404 | 用户不存在 |
+
+### 示例
+
+```bash
+curl -s http://localhost:8080/api/v1/users/1
+```
+
+---
+
 ## GET /api/v1/users/me
 
 获取当前登录用户信息。
