@@ -107,27 +107,6 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
-  if (serviceLoading) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-4 bg-gray-200 rounded w-48" />
-          <div className="h-20 bg-gray-200 rounded-xl" />
-          <div className="h-80 bg-gray-200 rounded-xl" />
-        </div>
-      </div>
-    );
-  }
-
-  if (!service) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 py-20 text-center">
-        <p className="text-gray-500 text-lg">服务不存在</p>
-        <Link to="/services" className="text-blue-600 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
-      </div>
-    );
-  }
-
   const allReviews = reviewsData?.items ?? [];
   const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
   const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
@@ -149,6 +128,27 @@ export default function ServiceDetail() {
     });
     return map;
   }, [reviewUserIds, userQueries]);
+
+  if (serviceLoading) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-8">
+        <div className="animate-pulse space-y-6">
+          <div className="h-4 bg-gray-200 rounded w-48" />
+          <div className="h-20 bg-gray-200 rounded-xl" />
+          <div className="h-80 bg-gray-200 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!service) {
+    return (
+      <div className="max-w-5xl mx-auto px-4 py-20 text-center">
+        <p className="text-gray-500 text-lg">服务不存在</p>
+        <Link to="/services" className="text-blue-600 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
+      </div>
+    );
+  }
 
   const handleBooking = () => {
     setBookingError("");
