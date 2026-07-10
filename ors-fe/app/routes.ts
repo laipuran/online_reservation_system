@@ -14,6 +14,7 @@ export default [
     route("services/:id", "routes/services/service-detail.tsx"),
     route("services/:id/confirm", "routes/services/confirm.tsx"),
     route("dashboard", "routes/dashboard.tsx"),
+    route("settings", "routes/_layout/settings.tsx"),
     route("complete-profile", "routes/_layout/complete-profile.tsx"),
 
     layout("routes/provider/_layout.tsx", [

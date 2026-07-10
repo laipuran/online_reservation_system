@@ -3,10 +3,7 @@ import { useParams, Link, useNavigate } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
-import {
-  fetchServiceReviews,
-  fetchServiceReviewStats,
-} from "../../lib/api/reviews";
+import { fetchServiceReviews } from "../../lib/api/reviews";
 import { useAuth } from "../../lib/hooks/use-auth";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {
@@ -24,30 +21,6 @@ function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md
   );
 }
 
-function ReviewStatsBar({ distribution, total }: { distribution: Record<number, number>; total: number }) {
-  const labels = [5, 4, 3, 2, 1];
-  return (
-    <div className="space-y-1.5">
-      {labels.map((star) => {
-        const count = distribution[star] ?? 0;
-        const pct = total > 0 ? (count / total) * 100 : 0;
-        return (
-          <div key={star} className="flex items-center gap-2 text-sm">
-            <span className="text-gray-600 w-6 text-right">{star}星</span>
-            <div className="flex-1 h-2.5 bg-gray-100 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-amber-400 rounded-full transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="text-gray-400 w-8 text-xs text-right">{count}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
 function ProviderCard({ providerId }: { providerId: number }) {
   const { data: provider } = useQuery({
     queryKey: ["provider", providerId],
@@ -61,9 +34,13 @@ function ProviderCard({ providerId }: { providerId: number }) {
   return (
     <div className="group relative cursor-pointer">
       <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 group-hover:rounded-b-none group-hover:border-gray-300 transition-all">
-        <div className={`w-12 h-12 ${colors[colorIndex]} rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0`}>
-          {initial}
-        </div>
+        {provider.logo_url ? (
+          <img src={provider.logo_url} alt={provider.business_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className={`w-12 h-12 ${colors[colorIndex]} rounded-full flex items-center justify-center text-white font-bold text-lg shrink-0`}>
+            {initial}
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
             <h2 className="font-semibold text-gray-900 truncate">{provider.business_name}</h2>
@@ -74,11 +51,15 @@ function ProviderCard({ providerId }: { providerId: number }) {
           </div>
         </div>
       </div>
-      <div className="absolute left-0 right-0 top-full z-20 bg-white border border-t-0 border-gray-300 rounded-b-xl p-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-lg">
+      <div className="absolute left-0 right-0 top-full z-20 bg-white dark:bg-gray-800 border border-t-0 border-gray-300 dark:border-gray-600 rounded-b-xl p-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all shadow-lg">
         <div className="flex gap-4">
-          <div className={`w-16 h-16 ${colors[colorIndex]} rounded-xl flex items-center justify-center text-white font-bold text-2xl shrink-0`}>
-            {initial}
-          </div>
+          {provider.logo_url ? (
+            <img src={provider.logo_url} alt={provider.business_name} className="w-16 h-16 rounded-xl object-cover shrink-0" />
+          ) : (
+            <div className={`w-16 h-16 ${colors[colorIndex]} rounded-xl flex items-center justify-center text-white font-bold text-2xl shrink-0`}>
+              {initial}
+            </div>
+          )}
           <div className="flex-1 space-y-2 text-sm">
             <p className="text-gray-600">{provider.description}</p>
             <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-gray-500">
@@ -104,6 +85,7 @@ export default function ServiceDetail() {
   const [note, setNote] = useState("");
   const [reviewPage, setReviewPage] = useState(1);
   const [keyword, setKeyword] = useState("");
+  const [bookingError, setBookingError] = useState("");
 
   const { data: service, isLoading: serviceLoading } = useQuery({
     queryKey: ["service", serviceId],
@@ -117,15 +99,10 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
+  const REVIEW_PAGE_SIZE = 5;
   const { data: reviewsData, isLoading: reviewsLoading } = useQuery({
-    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: 5 }],
-    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: 5 }),
-    enabled: !!serviceId,
-  });
-
-  const { data: reviewStats } = useQuery({
-    queryKey: ["service-review-stats", serviceId],
-    queryFn: () => fetchServiceReviewStats(serviceId),
+    queryKey: ["service-reviews", serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }],
+    queryFn: () => fetchServiceReviews(serviceId, { page: reviewPage, page_size: REVIEW_PAGE_SIZE + 1 }),
     enabled: !!serviceId,
   });
 
@@ -150,20 +127,43 @@ export default function ServiceDetail() {
     );
   }
 
-  const reviews = reviewsData?.items ?? [];
-  const reviewsTotal = reviewsData?.total ?? 0;
-  const reviewsPageSize = 5;
-  const totalReviewPages = Math.max(1, Math.ceil(reviewsTotal / reviewsPageSize));
+  const allReviews = reviewsData?.items ?? [];
+  const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
+  const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
 
   const handleBooking = () => {
+    setBookingError("");
     if (!token) {
       navigate(`/login?redirect=/services/${serviceId}`);
       return;
     }
     if (!bookDate || !bookTime) {
-      alert("请选择预约日期和时间");
+      setBookingError("请选择预约日期和时间");
       return;
     }
+
+    const selected = new Date(`${bookDate}T${bookTime}:00`);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedDate = new Date(bookDate + "T00:00:00");
+
+    if (selectedDate < today) {
+      setBookingError("预约日期不能早于今天");
+      return;
+    }
+
+    const threeMonthsLater = new Date();
+    threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+    if (selectedDate > threeMonthsLater) {
+      setBookingError("预约时间不能超过三个月后");
+      return;
+    }
+
+    if (selectedDate.getTime() === today.getTime() && selected <= now) {
+      setBookingError("预约时间不能早于当前时间");
+      return;
+    }
+
     const params = new URLSearchParams({ date: bookDate, time: bookTime });
     if (note) params.set("note", note);
     navigate(`/services/${serviceId}/confirm?${params.toString()}`);
@@ -177,6 +177,9 @@ export default function ServiceDetail() {
 
   const now = new Date();
   const minDate = now.toISOString().split("T")[0];
+  const maxDateObj = new Date();
+  maxDateObj.setMonth(maxDateObj.getMonth() + 3);
+  const maxDate = maxDateObj.toISOString().split("T")[0];
   const endTime = bookDate && bookTime
     ? new Date(`${bookDate}T${bookTime}:00`).getTime() + service.duration_minutes * 60000
     : null;
@@ -202,7 +205,7 @@ export default function ServiceDetail() {
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={handleSearch}
-            className="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
       </div>
@@ -257,19 +260,15 @@ export default function ServiceDetail() {
 
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">用户评价</h3>
-            {reviewStats && (
-              <div className="flex gap-8 mb-6 p-4 bg-gray-50 rounded-xl">
+            {allReviews.length > 0 && (
+              <div className="flex gap-8 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className="text-center shrink-0">
-                  <p className="text-4xl font-bold text-gray-900">{reviewStats.avg_rating.toFixed(1)}</p>
-                  <StarRating rating={reviewStats.avg_rating} size="sm" />
-                  <p className="text-xs text-gray-400 mt-1">{reviewStats.total} 条评价</p>
-                </div>
-                <div className="flex-1">
-                  <ReviewStatsBar distribution={reviewStats.distribution} total={reviewStats.total} />
+                  <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{service.avg_rating.toFixed(1)}</p>
+                  <StarRating rating={service.avg_rating} size="sm" />
+                  <p className="text-xs text-gray-400 mt-1">{service.review_count} 条评价</p>
                 </div>
               </div>
             )}
-
             {reviewsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
@@ -284,10 +283,10 @@ export default function ServiceDetail() {
                   <div key={review.id} className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
                       <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        {review.user_name.charAt(0)}
+                        U
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">{review.user_name}</p>
+                        <p className="text-sm font-medium text-gray-900">用户 {review.user_id}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
                           <span className="text-xs text-gray-400">
@@ -296,10 +295,10 @@ export default function ServiceDetail() {
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 ml-11">{review.comment}</p>
+                    <p className="text-sm text-gray-600 ml-11">{review.comment || ""}</p>
                   </div>
                 ))}
-                {totalReviewPages > 1 && (
+                {allReviews.length > 0 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button
                       onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
@@ -308,12 +307,10 @@ export default function ServiceDetail() {
                     >
                       上一页
                     </button>
-                    <span className="text-sm text-gray-400">
-                      {reviewPage} / {totalReviewPages}
-                    </span>
+                    <span className="text-sm text-gray-400">第 {reviewPage} 页</span>
                     <button
-                      onClick={() => setReviewPage((p) => Math.min(totalReviewPages, p + 1))}
-                      disabled={reviewPage >= totalReviewPages}
+                      onClick={() => setReviewPage((p) => p + 1)}
+                      disabled={!hasMoreReviews}
                       className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
                     >
                       下一页
@@ -327,27 +324,28 @@ export default function ServiceDetail() {
 
         <div className="flex-[3]">
           <div className="sticky top-24 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
               <p className="text-3xl font-bold text-red-500 mb-1">
                 <span className="text-lg">¥</span>{service.price}
               </p>
               <p className="text-sm text-gray-400 mb-4">{service.duration_minutes} 分钟</p>
 
-              <label className="block text-sm font-medium text-gray-700 mb-1">选择日期</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择日期</label>
               <input
                 type="date"
                 value={bookDate}
-                onChange={(e) => setBookDate(e.target.value)}
+                onChange={(e) => { setBookingError(""); setBookDate(e.target.value); }}
                 min={minDate}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                max={maxDate}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
               />
 
-              <label className="block text-sm font-medium text-gray-700 mb-1">选择时间</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择时间</label>
               <input
                 type="time"
                 value={bookTime}
-                onChange={(e) => setBookTime(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                onChange={(e) => { setBookingError(""); setBookTime(e.target.value); }}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-800 dark:text-gray-100"
               />
 
               {bookDate && bookTime && endTime && (
@@ -356,14 +354,18 @@ export default function ServiceDetail() {
                 </p>
               )}
 
-              <label className="block text-sm font-medium text-gray-700 mb-1">备注</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">备注</label>
               <textarea
                 value={note}
                 onChange={(e) => setNote(e.target.value)}
                 placeholder="如有特殊需求请备注..."
                 rows={3}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none bg-white dark:bg-gray-800 dark:text-gray-100"
               />
+
+              {bookingError && (
+                <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+              )}
 
               <button
                 onClick={handleBooking}
@@ -373,8 +375,8 @@ export default function ServiceDetail() {
               </button>
             </div>
 
-            <div className="bg-white rounded-xl border border-gray-200 p-4 text-sm text-gray-500">
-              <p className="font-medium text-gray-700 mb-1">{service.provider.business_name}</p>
+            <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 text-sm text-gray-500 dark:text-gray-400">
+              <p className="font-medium text-gray-700 dark:text-gray-200 mb-1">{service.provider.business_name}</p>
               <div className="flex items-center gap-1">
                 <StarRating rating={service.avg_rating} size="sm" />
                 <span className="text-xs">{service.avg_rating.toFixed(1)}</span>

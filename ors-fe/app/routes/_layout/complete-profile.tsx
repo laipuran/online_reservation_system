@@ -4,43 +4,17 @@ import ProviderInfoForm from "../../lib/components/provider-info-form";
 import { useCreateProviderProfile } from "../../lib/hooks/use-mutations";
 import { useAuth } from "../../lib/hooks/use-auth";
 import { ApiError } from "../../lib/api/client";
-
-interface Fields {
-  businessName: string;
-  description: string;
-  address: string;
-  email: string;
-  phone: string;
-  logoUrl: string;
-}
-
-const EMPTY_FIELDS: Fields = {
-  businessName: "",
-  description: "",
-  address: "",
-  email: "",
-  phone: "",
-  logoUrl: "",
-};
-
-function validateProviderFields(
-  fields: Fields
-): Partial<Record<keyof Fields, string>> {
-  const errors: Partial<Record<keyof Fields, string>> = {};
-  if (!fields.businessName.trim()) errors.businessName = "请输入商家名称";
-  if (!fields.description.trim()) errors.description = "请输入商家简介";
-  if (!fields.address.trim()) errors.address = "请输入地址";
-  if (!fields.email.trim()) errors.email = "请输入联系邮箱";
-  return errors;
-}
+import {
+  validateProviderFields,
+  EMPTY_PROVIDER_FIELDS,
+  type ProviderFields,
+} from "../../lib/validation";
 
 export default function CompleteProfile() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const [fields, setFields] = useState<Fields>(EMPTY_FIELDS);
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof Fields, string>>
-  >({});
+  const [fields, setFields] = useState<ProviderFields>(EMPTY_PROVIDER_FIELDS);
+  const [errors, setErrors] = useState<Partial<Record<keyof ProviderFields, string>>>({});
   const [apiError, setApiError] = useState("");
   const mutation = useCreateProviderProfile();
 
@@ -89,7 +63,7 @@ export default function CompleteProfile() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-2">完善商家信息</h1>
+      <h1 className="text-2xl font-bold text-center mb-2 text-gray-900 dark:text-gray-100">完善商家信息</h1>
       <p className="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">
         请填写商家资料以完成注册
       </p>

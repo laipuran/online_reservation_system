@@ -25,11 +25,7 @@ export default function Login() {
 
     try {
       const data = await loginMutation.mutateAsync({ email: email.trim(), password });
-      if (data.user.role === "provider") {
-        navigate("/provider/services", { replace: true });
-      } else {
-        navigate("/dashboard", { replace: true });
-      }
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       if (err instanceof ApiError) {
         setError(err.message);
@@ -41,25 +37,25 @@ export default function Login() {
 
   return (
     <div className="max-w-sm mx-auto mt-20 px-4">
-      <h1 className="text-2xl font-bold text-center mb-6">登录</h1>
+      <h1 className="text-2xl font-bold text-center mb-6 text-gray-900 dark:text-gray-100">登录</h1>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1">邮箱</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">邮箱</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
             placeholder="your@email.com"
           />
         </div>
         <div>
-          <label className="block text-sm font-medium mb-1">密码</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">密码</label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 dark:text-gray-100"
           />
         </div>
         {error && <p className="text-red-500 text-sm">{error}</p>}

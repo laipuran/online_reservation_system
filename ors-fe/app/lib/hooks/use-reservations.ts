@@ -17,9 +17,9 @@ export function useMyReservations(
 
       const serviceIds = [...new Set(result.items.map((item) => item.service_id))];
       const services = await Promise.all(
-        serviceIds.map((id) => fetchServiceById(id))
+        serviceIds.map((id) => fetchServiceById(id).catch(() => null))
       );
-      const serviceMap = new Map(services.map((s) => [s.id, s]));
+      const serviceMap = new Map(services.filter(Boolean).map((s) => [s!.id, s!]));
 
       const items: ReservationViewItem[] = result.items.map((item) => {
         const svc = serviceMap.get(item.service_id);

@@ -1,7 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useState, useMemo, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router";
-import { useCreateService } from "../../../lib/hooks/use-provider";
+import { useCreateService, useReplaceServiceTags } from "../../../lib/hooks/use-provider";
 import { useCategories } from "../../../lib/hooks/use-categories";
+import { TagInput } from "../../../lib/components/tag-input";
+import { createTag } from "../../../lib/api/tags";
+import type { Tag } from "../../../lib/api/tags";
 import { ApiError } from "../../../lib/api/client";
 
 export default function NewServicePage() {
@@ -9,13 +12,29 @@ export default function NewServicePage() {
   const createMutation = useCreateService();
   const { data: categories } = useCategories();
 
+  const parentCategories = useMemo(
+    () => (categories ?? []).filter((c) => c.parent_id == null),
+    [categories]
+  );
+
+  const childCategories = useMemo(() => {
+    const map = new Map<number, typeof categories>();
+    for (const p of parentCategories) {
+      map.set(p.id, (categories ?? []).filter((c) => c.parent_id === p.id));
+    }
+    return map;
+  }, [categories, parentCategories]);
+
   const [categoryId, setCategoryId] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([]);
   const [error, setError] = useState("");
+
+  const replaceTagsMutation = useReplaceServiceTags();
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -39,7 +58,7 @@ export default function NewServicePage() {
     }
 
     try {
-      await createMutation.mutateAsync({
+      const service = await createMutation.mutateAsync({
         category_id: Number(categoryId),
         title: title.trim(),
         description: description.trim() || undefined,
@@ -47,6 +66,20 @@ export default function NewServicePage() {
         duration_minutes: Number(durationMinutes),
         image_url: imageUrl.trim() || undefined,
       });
+
+      if (selectedTags.length > 0) {
+        const tagIds: number[] = [];
+        for (const tag of selectedTags) {
+          if (tag.id > 0) {
+            tagIds.push(tag.id);
+          } else {
+            const created = await createTag(tag.name);
+            tagIds.push(created.id);
+          }
+        }
+        await replaceTagsMutation.mutateAsync({ id: service.id, tagIds });
+      }
+
       navigate("/provider/services");
     } catch (err) {
       if (err instanceof ApiError) {
@@ -75,18 +108,26 @@ export default function NewServicePage() {
           <label className="block text-sm font-medium mb-1">
             服务分类 <span className="text-red-500">*</span>
           </label>
-          <select
-            value={categoryId}
-            onChange={(e) => setCategoryId(e.target.value)}
-            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-sm"
-          >
-            <option value="">请选择分类</option>
-            {(categories ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
+            <select
+              value={categoryId}
+              onChange={(e) => setCategoryId(e.target.value)}
+              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-sm"
+            >
+              <option value="">请选择分类</option>
+              {parentCategories.map((p) => {
+                const children = childCategories.get(p.id) ?? [];
+                if (children.length === 0) {
+                  return <option key={p.id} value={p.id}>{p.name}</option>;
+                }
+                return (
+                  <optgroup key={p.id} label={p.name}>
+                    {children.map((c) => (
+                      <option key={c.id} value={c.id}>&nbsp;&nbsp;{c.name}</option>
+                    ))}
+                  </optgroup>
+                );
+              })}
+            </select>
         </div>
 
         <div>
@@ -143,7 +184,7 @@ export default function NewServicePage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-1">图片 URL</label>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">图片 URL</label>
           <input
             type="url"
             value={imageUrl}
@@ -151,6 +192,11 @@ export default function NewServicePage() {
             className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-800 text-sm"
             placeholder="https://example.com/service.png"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-1 dark:text-gray-300">服务标签</label>
+          <TagInput selectedTags={selectedTags} onChange={setSelectedTags} />
         </div>
 
         {error && <p className="text-red-500 text-sm">{error}</p>}

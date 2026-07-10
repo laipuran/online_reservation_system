@@ -94,25 +94,36 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-3xl mx-auto mt-8 px-4 pb-12">
-      {/* CustomerCard */}
       <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-5 flex items-center gap-4">
-        <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
-          {user.name.charAt(0)}
-        </div>
+        {user.avatar_url ? (
+          <img src={user.avatar_url} alt={user.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+        ) : (
+          <div className="w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white text-lg font-bold shrink-0">
+            {user.name.charAt(0)}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">{user.name}</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             {ROLE_LABEL[user.role] ?? user.role} · 注册于 {joinedDate}
           </p>
         </div>
-        {user.role === "provider" && providerQuery.data && (
+        <div className="flex items-center gap-2">
           <Link
-            to="/provider/services"
-            className="shrink-0 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            to="/settings"
+            className="shrink-0 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 rounded px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
           >
-            服务商控制台
+            设置
           </Link>
-        )}
+          {user.role === "provider" && providerQuery.data && (
+            <Link
+              to="/provider/services"
+              className="shrink-0 text-sm text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800 rounded px-3 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
+            >
+              服务商控制台
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Status filter */}
@@ -150,9 +161,9 @@ export default function Dashboard() {
             <ReservationCard
               key={r.id}
               id={r.id}
-              serviceTitle={r.service.title}
-              serviceId={r.service.id}
-              providerName={r.service.provider.business_name}
+              serviceTitle={r.service?.title ?? `服务 #${r.service?.id}`}
+              serviceId={r.service?.id ?? 0}
+              providerName={r.service?.provider.business_name ?? "未知商家"}
               startTime={r.start_time}
               endTime={r.end_time}
               status={r.status}

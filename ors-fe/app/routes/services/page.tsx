@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useSearchParams } from "react-router";
 import { useCategories } from "../../lib/hooks/use-categories";
 import { useServices } from "../../lib/hooks/use-services";
 import { ServiceCard } from "../../lib/components/service-card";
@@ -18,12 +19,18 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 export default function ServicesPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: categories = [] } = useCategories();
-  const { data: servicesData, isLoading } = useServices({ page_size: 50 });
+  const urlKeyword = searchParams.get("keyword") || "";
+  const [keyword, setKeyword] = useState(urlKeyword);
+  const { data: servicesData, isLoading } = useServices({
+    keyword: keyword || undefined,
+    page_size: 50,
+  });
   const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
 
   const parentCategories = useMemo(
-    () => categories.filter((c) => c.parent_id === 0),
+    () => categories.filter((c) => !c.parent_id),
     [categories]
   );
 
@@ -49,6 +56,11 @@ export default function ServicesPage() {
 
   const shuffled = useMemo(() => shuffle(filtered), [filtered]);
 
+  function handleSearch(value: string) {
+    setKeyword(value);
+    setSearchParams(value ? { keyword: value } : {}, { replace: true });
+  }
+
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
       <div className="flex items-start justify-between mb-2">
@@ -59,6 +71,8 @@ export default function ServicesPage() {
         <input
           type="text"
           placeholder="搜索服务..."
+          value={keyword}
+          onChange={(e) => handleSearch(e.target.value)}
           className="border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
         />
       </div>
@@ -104,12 +118,12 @@ export default function ServicesPage() {
               key={s.id}
               id={s.id}
               title={s.title}
-              description={s.description}
+              description={s.description ?? ""}
               price={s.price}
               durationMinutes={s.duration_minutes}
               avgRating={s.avg_rating}
-              imageUrl={s.image_url}
-              status={s.status}
+              imageUrl={s.image_url ?? ""}
+              status={s.status ?? "active"}
             />
           ))}
         </div>
@@ -124,12 +138,12 @@ export default function ServicesPage() {
                 key={s.id}
                 id={s.id}
                 title={s.title}
-                description={s.description}
+                description={s.description ?? ""}
                 price={s.price}
                 durationMinutes={s.duration_minutes}
                 avgRating={s.avg_rating}
-                imageUrl={s.image_url}
-                status={s.status}
+                imageUrl={s.image_url ?? ""}
+                status={s.status ?? "active"}
               />
             ))}
           </div>
