@@ -458,7 +458,7 @@ sequenceDiagram
     FE->>BE: POST /api/v1/reservations<br/>{ serviceId, startTime, note }
     Note over BE: 校验 JWT Token，提取用户ID
 
-    BE->>DB: 检查该时段是否已被预约
+    BE->>DB: 检查同一服务下 pending/confirmed 预约是否存在时间段重叠
     DB-->>BE: 返回冲突检查结果
     alt 时段冲突
         BE-->>FE: 409 该时段已被预约
@@ -947,7 +947,7 @@ erDiagram
 | name | VARCHAR | 100 | NO | - | - | 用户昵称 |
 | email | VARCHAR | 255 | NO | - | UNIQUE | 登录邮箱 |
 | password_hash | VARCHAR | 255 | NO | - | - | bcrypt 哈希密码 |
-| phone | VARCHAR | 20 | YES | NULL | - | 手机号 |
+| phone | VARCHAR | 20 | YES | NULL | - | 手机号；如填写，只能包含数字、空格和 `-`，不能包含连续 `-`，且至少包含 1 个数字 |
 | avatar_url | VARCHAR | 500 | YES | NULL | - | 头像 URL |
 | role | VARCHAR | 20 | NO | 'customer' | CHECK(role IN ('customer','provider')) | 用户角色 |
 | created_at | TIMESTAMPTZ | - | NO | NOW() | - | 创建时间 |
@@ -962,7 +962,7 @@ erDiagram
 | business_name | VARCHAR | 200 | NO | - | - | 商家名称 |
 | description | TEXT | - | YES | NULL | - | 商家简介 |
 | address | VARCHAR | 500 | YES | NULL | - | 地址 |
-| phone | VARCHAR | 20 | YES | NULL | - | 联系电话 |
+| phone | VARCHAR | 20 | YES | NULL | - | 联系电话；如填写，只能包含数字、空格和 `-`，不能包含连续 `-`，且至少包含 1 个数字 |
 | email | VARCHAR | 255 | YES | NULL | - | 联系邮箱 |
 | logo_url | VARCHAR | 500 | YES | NULL | - | Logo URL |
 | created_at | TIMESTAMPTZ | - | NO | NOW() | - | 创建时间 |
@@ -1382,6 +1382,8 @@ Request:
   "note": "请准备热水"
 }
 ```
+
+> `start_time` 不能早于当前日期，且不能晚于当前时间 3 个月后。
 
 Response (201):
 

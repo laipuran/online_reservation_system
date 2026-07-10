@@ -18,7 +18,7 @@ export default function ConfirmPage() {
 
   const bookingMutation = useMutation({
     mutationFn: () => {
-      const startTime = `${searchParams.get("date")}T${searchParams.get("time")}:00Z`;
+      const startTime = new Date(`${date}T${time}:00`).toISOString();
       return createReservation({
         service_id: serviceId,
         start_time: startTime,

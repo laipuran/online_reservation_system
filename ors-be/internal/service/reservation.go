@@ -75,6 +75,9 @@ func (s *reservationService) Create(ctx context.Context, userID int64, input Res
 	if input.ServiceID <= 0 || input.StartTime.IsZero() {
 		return nil, ErrReservationInvalidInput
 	}
+	if !isReservationStartTimeAllowed(input.StartTime, time.Now()) {
+		return nil, ErrReservationInvalidInput
+	}
 
 	serviceItem, err := s.serviceRepo.GetByID(ctx, input.ServiceID)
 	if err != nil {
@@ -83,17 +86,29 @@ func (s *reservationService) Create(ctx context.Context, userID int64, input Res
 	if serviceItem == nil || serviceItem.Status != "active" {
 		return nil, ErrServiceNotFound
 	}
+	endTime := input.StartTime.Add(time.Duration(serviceItem.DurationMinutes) * time.Minute)
+
+	hasConflict, err := s.reservationRepo.HasTimeConflict(ctx, input.ServiceID, input.StartTime, endTime)
+	if err != nil {
+		return nil, err
+	}
+	if hasConflict {
+		return nil, repository.ErrReservationTimeConflict
+	}
 
 	reservation := &model.Reservation{
 		UserID:    userID,
 		ServiceID: input.ServiceID,
 		StartTime: input.StartTime,
-		EndTime:   input.StartTime.Add(time.Duration(serviceItem.DurationMinutes) * time.Minute),
+		EndTime:   endTime,
 		Status:    ReservationStatusPending,
 		Note:      strings.TrimSpace(input.Note),
 	}
 
 	if err := s.reservationRepo.Create(ctx, reservation); err != nil {
+		return nil, err
+	}
+	if err := s.notifyProviderReservationCreated(ctx, reservation); err != nil {
 		return nil, err
 	}
 
@@ -211,7 +226,16 @@ func (s *reservationService) CompleteDue(ctx context.Context, now time.Time) (in
 	if now.IsZero() {
 		now = time.Now()
 	}
-	return s.reservationRepo.CompleteDue(ctx, now)
+	completed, err := s.reservationRepo.CompleteDue(ctx, now)
+	if err != nil {
+		return 0, err
+	}
+	for _, reservation := range completed {
+		if err := s.notifyProviderReservationCompleted(ctx, reservation); err != nil {
+			return 0, err
+		}
+	}
+	return int64(len(completed)), nil
 }
 
 func (s *reservationService) getForProviderUser(ctx context.Context, userID, id int64) (*model.Reservation, error) {
@@ -244,7 +268,19 @@ func (s *reservationService) updateStatus(ctx context.Context, id int64, status 
 	return reservation, nil
 }
 
+func (s *reservationService) notifyProviderReservationCreated(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "收到新预约", "用户提交了新的预约，请及时处理。", NotificationTypeSystem)
+}
+
 func (s *reservationService) notifyProviderReservationCancelled(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "预约已取消", "用户已取消预约。", NotificationTypeReservationCancelled)
+}
+
+func (s *reservationService) notifyProviderReservationCompleted(ctx context.Context, reservation *model.Reservation) error {
+	return s.notifyProviderReservation(ctx, reservation, "预约已完成", "预约服务已完成。", NotificationTypeSystem)
+}
+
+func (s *reservationService) notifyProviderReservation(ctx context.Context, reservation *model.Reservation, title, content, notificationType string) error {
 	serviceItem, err := s.serviceRepo.GetByID(ctx, reservation.ServiceID)
 	if err != nil {
 		return err
@@ -261,7 +297,7 @@ func (s *reservationService) notifyProviderReservationCancelled(ctx context.Cont
 		return ErrProviderNotFound
 	}
 
-	return s.createReservationNotification(ctx, provider.UserID, "预约已取消", "用户已取消预约。", NotificationTypeReservationCancelled)
+	return s.createReservationNotification(ctx, provider.UserID, title, content, notificationType)
 }
 
 func (s *reservationService) createReservationNotification(ctx context.Context, userID int64, title, content, notificationType string) error {
@@ -302,6 +338,20 @@ func normalizeReservationPagination(page, pageSize int) (int, int) {
 		pageSize = 100
 	}
 	return page, pageSize
+}
+
+func isReservationStartTimeAllowed(startTime, now time.Time) bool {
+	if startTime.IsZero() {
+		return false
+	}
+
+	location := now.Location()
+	startOfToday := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, location)
+	if startTime.In(location).Before(startOfToday) {
+		return false
+	}
+
+	return !startTime.After(now.AddDate(0, 3, 0))
 }
 
 func reservationToView(reservation *model.Reservation, serviceView *model.ServiceView) *model.ReservationView {
