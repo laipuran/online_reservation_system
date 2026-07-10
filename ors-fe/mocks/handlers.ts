@@ -92,6 +92,20 @@ export const handlers = [
     });
   }),
 
+  /* ── Users ──────────────────────────────────────────────── */
+
+  http.get(`${API}/users/:id`, ({ params }) => {
+    const id = Number(params.id);
+    const u = db.user.findFirst({ where: { id: { equals: id } } });
+    if (!u) return err("用户不存在", 404);
+    return json({
+      id: u.id,
+      name: u.name,
+      avatar_url: u.avatar_url || undefined,
+      created_at: u.created_at,
+    });
+  }),
+
   /* ── Categories ─────────────────────────────────────────── */
 
   http.get(`${API}/categories`, () => {

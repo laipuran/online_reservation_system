@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
 import { fetchServiceReviews } from "../../lib/api/reviews";
+import { fetchUserPublic } from "../../lib/api/users";
 import { useAuth } from "../../lib/hooks/use-auth";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {
@@ -130,6 +131,24 @@ export default function ServiceDetail() {
   const allReviews = reviewsData?.items ?? [];
   const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
   const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
+
+  const reviewUserIds = useMemo(
+    () => [...new Set(allReviews.map((r) => r.user_id))],
+    [allReviews]
+  );
+  const userQueries = useQueries({
+    queries: reviewUserIds.map((id) => ({
+      queryKey: ["user-public", id],
+      queryFn: () => fetchUserPublic(id),
+    })),
+  });
+  const userMap = useMemo(() => {
+    const map: Record<number, { name: string; avatar_url?: string }> = {};
+    reviewUserIds.forEach((id, i) => {
+      map[id] = userQueries[i]?.data ?? { name: `用户 ${id}` };
+    });
+    return map;
+  }, [reviewUserIds, userQueries]);
 
   const handleBooking = () => {
     setBookingError("");
@@ -279,14 +298,20 @@ export default function ServiceDetail() {
               <p className="text-sm text-gray-400 py-6 text-center">暂无评价</p>
             ) : (
               <div className="space-y-4">
-                {reviews.map((review) => (
+                {reviews.map((review) => {
+                  const u = userMap[review.user_id] ?? { name: `用户 ${review.user_id}` };
+                  return (
                   <div key={review.id} className="border-b border-gray-100 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        U
+                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0 overflow-hidden">
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          u.name[0]
+                        )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">用户 {review.user_id}</p>
+                        <p className="text-sm font-medium text-gray-900">{u.name}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
                           <span className="text-xs text-gray-400">
@@ -297,7 +322,8 @@ export default function ServiceDetail() {
                     </div>
                     <p className="text-sm text-gray-600 ml-11">{review.comment || ""}</p>
                   </div>
-                ))}
+                  );
+                })}
                 {allReviews.length > 0 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button

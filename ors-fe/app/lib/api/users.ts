@@ -1,5 +1,16 @@
 import { request, type User } from "./client";
 
+export interface UserPublic {
+  id: number;
+  name: string;
+  avatar_url?: string;
+  created_at: string;
+}
+
+export function fetchUserPublic(id: number): Promise<UserPublic> {
+  return request<UserPublic>(`/users/${id}`);
+}
+
 export function fetchMyProfile(): Promise<User> {
   return request<User>("/users/me");
 }
