@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQueries } from "@tanstack/react-query";
 import {
   useProviderReservations,
   useConfirmReservation,
   useRejectReservation,
 } from "../../../lib/hooks/use-provider-reservations";
 import type { ReservationStatus } from "../../../lib/api/reservations";
+import { fetchUserPublic } from "../../../lib/api/users";
 import { STATUS_CONFIG } from "../../../lib/status";
 
 const STATUS_FILTERS: Array<{ label: string; value: ReservationStatus | "" }> = [
@@ -33,6 +35,24 @@ export default function ProviderReservationsPage() {
 
   const reservations = data?.items ?? [];
   const hasMore = (data?.items?.length ?? 0) >= pageSize;
+
+  const reservationUserIds = useMemo(
+    () => [...new Set(reservations.map((r) => r.user_id))],
+    [reservations]
+  );
+  const userQueries = useQueries({
+    queries: reservationUserIds.map((id) => ({
+      queryKey: ["user-public", id],
+      queryFn: () => fetchUserPublic(id),
+    })),
+  });
+  const userMap = useMemo(() => {
+    const map: Record<number, { name: string; avatar_url?: string }> = {};
+    reservationUserIds.forEach((id, i) => {
+      map[id] = userQueries[i]?.data ?? { name: `用户 ${id}` };
+    });
+    return map;
+  }, [reservationUserIds, userQueries]);
 
   return (
     <div>
@@ -71,6 +91,7 @@ export default function ProviderReservationsPage() {
                 <tr className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">预约时间</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">服务名称</th>
+                  <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">用户</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">备注</th>
                   <th className="text-left px-4 py-3 font-medium text-gray-600 dark:text-gray-400">状态</th>
                   <th className="text-right px-4 py-3 font-medium text-gray-600 dark:text-gray-400">操作</th>
@@ -87,6 +108,23 @@ export default function ProviderReservationsPage() {
                     </td>
                     <td className="px-4 py-3 max-w-[200px] truncate">
                       {r.service?.title ?? "未知服务"}
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {(() => {
+                        const u = userMap[r.user_id] ?? { name: `用户 ${r.user_id}` };
+                        return (
+                          <span className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500 font-medium shrink-0 overflow-hidden">
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
+                              ) : (
+                                u.name[0]
+                              )}
+                            </span>
+                            <span className="text-gray-900 dark:text-gray-100">{u.name}</span>
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-4 py-3 max-w-[150px] truncate text-gray-500 dark:text-gray-400">
                       {r.note || "-"}

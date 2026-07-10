@@ -21,6 +21,7 @@ export interface ReservationItem {
 
 export interface ReservationViewItem {
   id: number;
+  user_id: number;
   service: {
     id: number;
     title: string;
