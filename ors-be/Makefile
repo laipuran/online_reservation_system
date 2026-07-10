@@ -1,6 +1,6 @@
 COMPOSE_FILE = ../docker-compose.yml
 
-.PHONY: build run clean migrate-up migrate-down migrate-create db-up db-down seed setup
+.PHONY: build run clean migrate-up migrate-down migrate-create db-up db-down seed setup setup-demo seed-demo
 
 APP_NAME = ors-be
 DB_URL ?= postgres://postgres:postgres@localhost:5432/ors?sslmode=disable
@@ -38,9 +38,15 @@ setup: db-up
 	$(MAKE) migrate-up
 	$(MAKE) seed
 
+setup-demo: setup seed-demo
+
 seed:
 	@echo "Seeding reference data..."
 	docker compose exec -T db psql -U postgres -d ors < db/seed.sql
+
+seed-demo: 
+	@echo "Seeding demo data..."
+	docker compose exec -T db psql -U postgres -d ors < db/seed-demo.sql
 
 .PHONY: deps
 deps:
