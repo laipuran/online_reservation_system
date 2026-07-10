@@ -84,7 +84,7 @@ export default function CompleteProfile() {
         onLogoUrlChange={(v) => setFields((f) => ({ ...f, logoUrl: v }))}
       />
 
-      {apiError && <p className="text-red-500 text-sm mt-4">{apiError}</p>}
+      {apiError && <p className="text-red-500 dark:text-red-400 text-sm mt-4">{apiError}</p>}
 
       <button
         type="button"

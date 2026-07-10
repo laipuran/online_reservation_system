@@ -257,7 +257,7 @@ export default function ServiceDetail() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-red-500">
+                <p className="text-3xl font-bold text-red-500 dark:text-red-400">
                   <span className="text-lg">¥</span>{service.price}
                 </p>
                 <p className="text-sm text-gray-400 dark:text-gray-500">{service.duration_minutes} 分钟</p>
@@ -351,10 +351,10 @@ export default function ServiceDetail() {
         <div className="flex-[3]">
           <div className="sticky top-24 space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-              <p className="text-3xl font-bold text-red-500 mb-1">
+              <p className="text-3xl font-bold text-red-500 dark:text-red-400 mb-1">
                 <span className="text-lg">¥</span>{service.price}
               </p>
-              <p className="text-sm text-gray-400 mb-4">{service.duration_minutes} 分钟</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">{service.duration_minutes} 分钟</p>
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择日期</label>
               <input
@@ -390,7 +390,7 @@ export default function ServiceDetail() {
               />
 
               {bookingError && (
-                <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+                <p className="text-red-500 dark:text-red-400 text-sm mb-3">{bookingError}</p>
               )}
 
               <button

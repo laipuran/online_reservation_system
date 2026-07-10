@@ -114,7 +114,7 @@ export default function SettingsPage() {
             disabled
             className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-sm cursor-not-allowed"
           />
-          <p className="text-xs text-gray-400 mt-1">邮箱不可修改</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">邮箱不可修改</p>
         </div>
 
         <div>
@@ -149,8 +149,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        {profileError && <p className="text-red-500 text-sm">{profileError}</p>}
-        {profileOk && <p className="text-green-500 text-sm">保存成功</p>}
+        {profileError && <p className="text-red-500 dark:text-red-400 text-sm">{profileError}</p>}
+        {profileOk && <p className="text-green-500 dark:text-green-400 text-sm">保存成功</p>}
 
         <button
           type="submit"
@@ -184,8 +184,8 @@ export default function SettingsPage() {
           />
         </div>
 
-        {passwordError && <p className="text-red-500 text-sm">{passwordError}</p>}
-        {passwordOk && <p className="text-green-500 text-sm">密码修改成功</p>}
+        {passwordError && <p className="text-red-500 dark:text-red-400 text-sm">{passwordError}</p>}
+        {passwordOk && <p className="text-green-500 dark:text-green-400 text-sm">密码修改成功</p>}
 
         <button
           type="submit"

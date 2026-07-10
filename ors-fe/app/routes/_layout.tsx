@@ -81,7 +81,7 @@ export default function Layout() {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="text-sm text-red-500 hover:underline"
+                    className="text-sm text-red-500 dark:text-red-400 hover:underline"
                   >
                     退出
                   </button>

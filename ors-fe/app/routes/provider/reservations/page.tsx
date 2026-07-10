@@ -114,7 +114,7 @@ export default function ProviderReservationsPage() {
                         const u = userMap[r.user_id] ?? { name: `用户 ${r.user_id}` };
                         return (
                           <span className="flex items-center gap-2">
-                            <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500 font-medium shrink-0 overflow-hidden">
+                            <span className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400 font-medium shrink-0 overflow-hidden">
                               {u.avatar_url ? (
                                 <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
                               ) : (
