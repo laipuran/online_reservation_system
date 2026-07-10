@@ -533,7 +533,7 @@ func TestReservationRepository_CreateQueryStatusAndConflict(t *testing.T) {
 
 	providerReservations, err := f.reservations.ListByProviderID(ctx, providerA.ID, "", 10, 0)
 	requireNoError(t, err)
-	if got, want := reservationIDs(providerReservations), []int64{reservationC.ID, reservationB.ID, reservationA.ID}; !sameInt64s(got, want) {
+	if got, want := reservationIDs(providerReservations), []int64{cancelledReservation.ID, reservationC.ID, reservationB.ID, reservationA.ID}; !sameInt64s(got, want) {
 		t.Fatalf("ListByProviderID(all) IDs = %v, want %v", got, want)
 	}
 
@@ -545,8 +545,8 @@ func TestReservationRepository_CreateQueryStatusAndConflict(t *testing.T) {
 
 	defaultLimitReservations, err := f.reservations.ListByProviderID(ctx, providerA.ID, "", 0, -1)
 	requireNoError(t, err)
-	if len(defaultLimitReservations) != 3 {
-		t.Fatalf("ListByProviderID(default limit) len = %d, want 3", len(defaultLimitReservations))
+	if len(defaultLimitReservations) != 4 {
+		t.Fatalf("ListByProviderID(default limit) len = %d, want 4", len(defaultLimitReservations))
 	}
 
 	cancelled, err := f.reservations.UpdateStatus(ctx, reservationA.ID, "cancelled")
@@ -636,6 +636,93 @@ func TestReviewRepository_CreateAndLists(t *testing.T) {
 	requireNoError(t, err)
 	if got, want := reviewIDs(providerReviews), []int64{reviewC.ID}; !sameInt64s(got, want) {
 		t.Fatalf("ListByProviderID(providerB) IDs = %v, want %v", got, want)
+	}
+}
+
+func TestReviewRepository_CreateAndRefreshServiceRating(t *testing.T) {
+	f := newRepoFixture(t)
+	ctx := f.ctx
+
+	customerA := f.createUser(t, "rating-customer-a@example.com", "customer")
+	customerB := f.createUser(t, "rating-customer-b@example.com", "customer")
+	customerC := f.createUser(t, "rating-customer-c@example.com", "customer")
+	providerUser := f.createUser(t, "rating-provider@example.com", "provider")
+	provider := f.createProvider(t, providerUser.ID, "Rating Provider")
+	category := f.createCategory(t, "Rating Category", "", nil)
+	serviceA := f.createService(t, provider.ID, category.ID, "Rating Service A", "", 100, 60, "active")
+	serviceB := f.createService(t, provider.ID, category.ID, "Rating Service B", "", 120, 60, "active")
+
+	base := time.Date(2026, 7, 11, 9, 0, 0, 0, time.UTC)
+	reservationA := f.createReservation(t, customerA.ID, serviceA.ID, base, "completed", "")
+	reservationB := f.createReservation(t, customerB.ID, serviceA.ID, base.Add(2*time.Hour), "completed", "")
+	reservationC := f.createReservation(t, customerC.ID, serviceB.ID, base.Add(4*time.Hour), "completed", "")
+
+	reviewA := &model.Review{
+		ReservationID: reservationA.ID,
+		UserID:        customerA.ID,
+		ServiceID:     serviceA.ID,
+		Rating:        5,
+		Comment:       "excellent",
+	}
+	requireNoError(t, f.reviews.CreateAndRefreshServiceRating(ctx, reviewA))
+
+	updatedService, err := f.services.GetByID(ctx, serviceA.ID)
+	requireNoError(t, err)
+	if updatedService == nil || updatedService.ReviewCount != 1 || updatedService.AvgRating != 5 {
+		t.Fatalf("service stats after first review = %+v, want count 1 avg 5", updatedService)
+	}
+
+	reviewB := &model.Review{
+		ReservationID: reservationB.ID,
+		UserID:        customerB.ID,
+		ServiceID:     serviceA.ID,
+		Rating:        4,
+		Comment:       "solid",
+	}
+	requireNoError(t, f.reviews.CreateAndRefreshServiceRating(ctx, reviewB))
+
+	updatedService, err = f.services.GetByID(ctx, serviceA.ID)
+	requireNoError(t, err)
+	if updatedService == nil || updatedService.ReviewCount != 2 || updatedService.AvgRating < 4.49 || updatedService.AvgRating > 4.51 {
+		t.Fatalf("service stats after two reviews = %+v, want count 2 avg 4.5", updatedService)
+	}
+
+	view, err := f.services.GetViewByID(ctx, serviceA.ID)
+	requireNoError(t, err)
+	if view == nil || view.ReviewCount != 2 || view.AvgRating < 4.49 || view.AvgRating > 4.51 {
+		t.Fatalf("GetViewByID() stats = %+v, want count 2 avg 4.5", view)
+	}
+
+	reviewC := &model.Review{
+		ReservationID: reservationC.ID,
+		UserID:        customerC.ID,
+		ServiceID:     serviceB.ID,
+		Rating:        3,
+		Comment:       "ok",
+	}
+	requireNoError(t, f.reviews.CreateAndRefreshServiceRating(ctx, reviewC))
+
+	items, _, err := f.services.List(ctx, model.ServiceFilter{SortBy: "rating", SortOrder: "desc", Page: 1, PageSize: 10})
+	requireNoError(t, err)
+	if len(items) < 2 || items[0].ID != serviceA.ID || items[0].ReviewCount != 2 {
+		t.Fatalf("List(sort rating desc) first = %+v, want service %d with count 2", items, serviceA.ID)
+	}
+
+	err = f.reviews.CreateAndRefreshServiceRating(ctx, &model.Review{
+		ReservationID: reservationA.ID,
+		UserID:        customerA.ID,
+		ServiceID:     serviceA.ID,
+		Rating:        1,
+		Comment:       "duplicate",
+	})
+	if err == nil {
+		t.Fatal("CreateAndRefreshServiceRating(duplicate) error = nil, want error")
+	}
+
+	updatedService, err = f.services.GetByID(ctx, serviceA.ID)
+	requireNoError(t, err)
+	if updatedService == nil || updatedService.ReviewCount != 2 || updatedService.AvgRating < 4.49 || updatedService.AvgRating > 4.51 {
+		t.Fatalf("service stats after duplicate failure = %+v, want unchanged count 2 avg 4.5", updatedService)
 	}
 }
 

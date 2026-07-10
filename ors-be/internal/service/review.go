@@ -78,7 +78,7 @@ func (s *reviewService) Create(ctx context.Context, userID int64, input ReviewIn
 		Rating:        input.Rating,
 		Comment:       strings.TrimSpace(input.Comment),
 	}
-	if err := s.reviewRepo.Create(ctx, review); err != nil {
+	if err := s.reviewRepo.CreateAndRefreshServiceRating(ctx, review); err != nil {
 		return nil, err
 	}
 	return review, nil

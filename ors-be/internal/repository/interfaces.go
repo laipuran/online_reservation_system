@@ -71,6 +71,7 @@ type ReservationRepository interface {
 
 type ReviewRepository interface {
 	Create(ctx context.Context, review *model.Review) error
+	CreateAndRefreshServiceRating(ctx context.Context, review *model.Review) error
 	GetByID(ctx context.Context, id int64) (*model.Review, error)
 	GetByReservationID(ctx context.Context, reservationID int64) (*model.Review, error)
 	ListByServiceID(ctx context.Context, serviceID int64, limit, offset int) ([]*model.Review, error)
