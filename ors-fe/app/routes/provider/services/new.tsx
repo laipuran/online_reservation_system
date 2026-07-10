@@ -199,7 +199,7 @@ export default function NewServicePage() {
           <TagInput selectedTags={selectedTags} onChange={setSelectedTags} />
         </div>
 
-        {error && <p className="text-red-500 text-sm">{error}</p>}
+        {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
 
         <div className="flex gap-3 pt-2">
           <button

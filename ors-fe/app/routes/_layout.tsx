@@ -38,7 +38,7 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <header className="border-b border-gray-200 dark:border-gray-700">
+      <header className="sticky top-0 z-50 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-700">
         <nav className="max-w-5xl mx-auto flex items-center justify-between px-4 h-14">
           <div className="flex items-center gap-6">
             <Link to="/" className="font-bold text-lg shrink-0">
@@ -81,7 +81,7 @@ export default function Layout() {
                   )}
                   <button
                     onClick={handleLogout}
-                    className="text-sm text-red-500 hover:underline"
+                    className="text-sm text-red-500 dark:text-red-400 hover:underline"
                   >
                     退出
                   </button>

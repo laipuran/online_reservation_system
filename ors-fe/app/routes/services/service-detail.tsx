@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link, useNavigate } from "react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { fetchServiceById, fetchServiceTags } from "../../lib/api/services";
 import { fetchProvider } from "../../lib/api/providers";
 import { fetchServiceReviews } from "../../lib/api/reviews";
+import { fetchUserPublic } from "../../lib/api/users";
 import { useAuth } from "../../lib/hooks/use-auth";
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" | "lg" }) {
@@ -27,13 +28,13 @@ function ProviderCard({ providerId }: { providerId: number }) {
     queryFn: () => fetchProvider(providerId),
     enabled: !!providerId,
   });
-  if (!provider) return <div className="h-20 bg-gray-50 rounded-xl animate-pulse" />;
+  if (!provider) return <div className="h-20 bg-gray-50 dark:bg-gray-800 rounded-xl animate-pulse" />;
   const initial = provider.business_name.charAt(0);
   const colorIndex = providerId % 6;
   const colors = ["bg-blue-500", "bg-emerald-500", "bg-violet-500", "bg-rose-500", "bg-amber-500", "bg-cyan-500"];
   return (
     <div className="group relative cursor-pointer">
-      <div className="flex items-center gap-4 p-4 bg-white rounded-xl border border-gray-200 group-hover:rounded-b-none group-hover:border-gray-300 transition-all">
+      <div className="flex items-center gap-4 p-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 group-hover:rounded-b-none group-hover:border-gray-300 dark:group-hover:border-gray-600 transition-all">
         {provider.logo_url ? (
           <img src={provider.logo_url} alt={provider.business_name} className="w-12 h-12 rounded-full object-cover shrink-0" />
         ) : (
@@ -43,11 +44,11 @@ function ProviderCard({ providerId }: { providerId: number }) {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h2 className="font-semibold text-gray-900 truncate">{provider.business_name}</h2>
+            <h2 className="font-semibold text-gray-900 dark:text-gray-100 truncate">{provider.business_name}</h2>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <StarRating rating={4.5} size="sm" />
-            <span className="text-xs text-gray-400">▼ 查看商家详情</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">▼ 查看商家详情</span>
           </div>
         </div>
       </div>
@@ -61,8 +62,8 @@ function ProviderCard({ providerId }: { providerId: number }) {
             </div>
           )}
           <div className="flex-1 space-y-2 text-sm">
-            <p className="text-gray-600">{provider.description}</p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-gray-500">
+            <p className="text-gray-600 dark:text-gray-400">{provider.description}</p>
+            <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-gray-500 dark:text-gray-400">
               <span>📍 {provider.address}</span>
               <span>📞 {provider.phone}</span>
               <span>✉️ {provider.email}</span>
@@ -106,13 +107,35 @@ export default function ServiceDetail() {
     enabled: !!serviceId,
   });
 
+  const allReviews = reviewsData?.items ?? [];
+  const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
+  const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
+
+  const reviewUserIds = useMemo(
+    () => [...new Set(allReviews.map((r) => r.user_id))],
+    [allReviews]
+  );
+  const userQueries = useQueries({
+    queries: reviewUserIds.map((id) => ({
+      queryKey: ["user-public", id],
+      queryFn: () => fetchUserPublic(id),
+    })),
+  });
+  const userMap = useMemo(() => {
+    const map: Record<number, { name: string; avatar_url?: string }> = {};
+    reviewUserIds.forEach((id, i) => {
+      map[id] = userQueries[i]?.data ?? { name: `用户 ${id}` };
+    });
+    return map;
+  }, [reviewUserIds, userQueries]);
+
   if (serviceLoading) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-8">
         <div className="animate-pulse space-y-6">
-          <div className="h-4 bg-gray-200 rounded w-48" />
-          <div className="h-20 bg-gray-200 rounded-xl" />
-          <div className="h-80 bg-gray-200 rounded-xl" />
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-48" />
+          <div className="h-20 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
         </div>
       </div>
     );
@@ -121,15 +144,11 @@ export default function ServiceDetail() {
   if (!service) {
     return (
       <div className="max-w-5xl mx-auto px-4 py-20 text-center">
-        <p className="text-gray-500 text-lg">服务不存在</p>
-        <Link to="/services" className="text-blue-600 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
+        <p className="text-gray-500 dark:text-gray-400 text-lg">服务不存在</p>
+        <Link to="/services" className="text-blue-600 dark:text-blue-400 hover:underline mt-4 inline-block">&larr; 返回服务列表</Link>
       </div>
     );
   }
-
-  const allReviews = reviewsData?.items ?? [];
-  const reviews = allReviews.slice(0, REVIEW_PAGE_SIZE);
-  const hasMoreReviews = allReviews.length > REVIEW_PAGE_SIZE;
 
   const handleBooking = () => {
     setBookingError("");
@@ -186,12 +205,12 @@ export default function ServiceDetail() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-6">
-      <nav className="text-sm text-gray-400 mb-4">
-        <Link to="/" className="hover:text-blue-600">首页</Link>
+      <nav className="text-sm text-gray-400 dark:text-gray-500 mb-4">
+        <Link to="/" className="hover:text-blue-600 dark:hover:text-blue-400">首页</Link>
         <span className="mx-2">&gt;</span>
-        <Link to="/services" className="hover:text-blue-600">预约项目</Link>
+        <Link to="/services" className="hover:text-blue-600 dark:hover:text-blue-400">预约项目</Link>
         <span className="mx-2">&gt;</span>
-        <span className="text-gray-600">{service.title}</span>
+        <span className="text-gray-600 dark:text-gray-300">{service.title}</span>
       </nav>
 
       <div className="flex gap-4 mb-8">
@@ -215,10 +234,10 @@ export default function ServiceDetail() {
           {service.image_url ? (
             <img src={service.image_url} alt={service.title} className="w-full h-72 object-cover rounded-xl" />
           ) : (
-            <div className="w-full h-72 rounded-xl bg-gradient-to-br from-blue-50 via-sky-100 to-indigo-100 flex items-center justify-center">
+            <div className="w-full h-72 rounded-xl bg-gradient-to-br from-blue-50 via-sky-100 to-indigo-100 dark:from-blue-950 dark:via-sky-950 dark:to-indigo-950 flex items-center justify-center">
               <div className="text-center">
                 <div className="text-5xl mb-2">💆</div>
-                <p className="text-gray-400 text-sm">{service.title}</p>
+                <p className="text-gray-400 dark:text-gray-500 text-sm">{service.title}</p>
               </div>
             </div>
           )}
@@ -226,27 +245,27 @@ export default function ServiceDetail() {
           <div>
             <div className="flex items-start justify-between gap-4 mb-4">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{service.title}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{service.title}</h1>
                 <div className="flex items-center gap-3 mt-2">
                   <StarRating rating={service.avg_rating} size="md" />
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     {service.avg_rating.toFixed(1)} ({service.review_count} 条评价)
                   </span>
-                  <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700">
+                  <span className="text-xs px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
                     {service.status === "active" ? "可预约" : service.status}
                   </span>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-3xl font-bold text-red-500">
+                <p className="text-3xl font-bold text-red-500 dark:text-red-400">
                   <span className="text-lg">¥</span>{service.price}
                 </p>
-                <p className="text-sm text-gray-400">{service.duration_minutes} 分钟</p>
+                <p className="text-sm text-gray-400 dark:text-gray-500">{service.duration_minutes} 分钟</p>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
               {tags.map((tag) => (
-                <span key={tag.id} className="text-xs px-3 py-1 rounded-full bg-gray-100 text-gray-600">
+                <span key={tag.id} className="text-xs px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
                   {tag.name}
                 </span>
               ))}
@@ -254,64 +273,71 @@ export default function ServiceDetail() {
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-2">服务详情</h3>
-            <p className="text-sm text-gray-600 leading-relaxed">{service.description}</p>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">服务详情</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{service.description}</p>
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900 mb-4">用户评价</h3>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">用户评价</h3>
             {allReviews.length > 0 && (
               <div className="flex gap-8 mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-xl">
                 <div className="text-center shrink-0">
                   <p className="text-4xl font-bold text-gray-900 dark:text-gray-100">{service.avg_rating.toFixed(1)}</p>
                   <StarRating rating={service.avg_rating} size="sm" />
-                  <p className="text-xs text-gray-400 mt-1">{service.review_count} 条评价</p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{service.review_count} 条评价</p>
                 </div>
               </div>
             )}
             {reviewsLoading ? (
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-20 bg-gray-50 rounded-lg animate-pulse" />
+                  <div key={i} className="h-20 bg-gray-50 dark:bg-gray-800 rounded-lg animate-pulse" />
                 ))}
               </div>
             ) : reviews.length === 0 ? (
-              <p className="text-sm text-gray-400 py-6 text-center">暂无评价</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 py-6 text-center">暂无评价</p>
             ) : (
               <div className="space-y-4">
-                {reviews.map((review) => (
-                  <div key={review.id} className="border-b border-gray-100 pb-4">
+                {reviews.map((review) => {
+                  const u = userMap[review.user_id] ?? { name: `用户 ${review.user_id}` };
+                  return (
+                  <div key={review.id} className="border-b border-gray-100 dark:border-gray-800 pb-4">
                     <div className="flex items-center gap-3 mb-1.5">
-                      <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-sm text-gray-500 font-medium shrink-0">
-                        U
+                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm text-gray-500 dark:text-gray-400 font-medium shrink-0 overflow-hidden">
+                        {u.avatar_url ? (
+                          <img src={u.avatar_url} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          u.name[0]
+                        )}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-900">用户 {review.user_id}</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{u.name}</p>
                         <div className="flex items-center gap-2">
                           <StarRating rating={review.rating} size="sm" />
-                          <span className="text-xs text-gray-400">
+                          <span className="text-xs text-gray-400 dark:text-gray-500">
                             {new Date(review.created_at).toLocaleDateString("zh-CN")}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-600 ml-11">{review.comment || ""}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 ml-11">{review.comment || ""}</p>
                   </div>
-                ))}
+                  );
+                })}
                 {allReviews.length > 0 && (
                   <div className="flex items-center justify-center gap-2 pt-2">
                     <button
                       onClick={() => setReviewPage((p) => Math.max(1, p - 1))}
                       disabled={reviewPage <= 1}
-                      className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
+                      className="text-sm px-3 py-1 rounded border border-gray-200 dark:border-gray-700 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       上一页
                     </button>
-                    <span className="text-sm text-gray-400">第 {reviewPage} 页</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500">第 {reviewPage} 页</span>
                     <button
                       onClick={() => setReviewPage((p) => p + 1)}
                       disabled={!hasMoreReviews}
-                      className="text-sm px-3 py-1 rounded border border-gray-200 disabled:opacity-30 hover:bg-gray-50"
+                      className="text-sm px-3 py-1 rounded border border-gray-200 dark:border-gray-700 disabled:opacity-30 hover:bg-gray-50 dark:hover:bg-gray-800"
                     >
                       下一页
                     </button>
@@ -325,10 +351,10 @@ export default function ServiceDetail() {
         <div className="flex-[3]">
           <div className="sticky top-24 space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 shadow-sm">
-              <p className="text-3xl font-bold text-red-500 mb-1">
+              <p className="text-3xl font-bold text-red-500 dark:text-red-400 mb-1">
                 <span className="text-lg">¥</span>{service.price}
               </p>
-              <p className="text-sm text-gray-400 mb-4">{service.duration_minutes} 分钟</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mb-4">{service.duration_minutes} 分钟</p>
 
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">选择日期</label>
               <input
@@ -349,7 +375,7 @@ export default function ServiceDetail() {
               />
 
               {bookDate && bookTime && endTime && (
-                <p className="text-xs text-gray-500 mb-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
                   预约时段：{bookTime} - {new Date(endTime).toTimeString().slice(0, 5)}（{service.duration_minutes} 分钟）
                 </p>
               )}
@@ -364,7 +390,7 @@ export default function ServiceDetail() {
               />
 
               {bookingError && (
-                <p className="text-red-500 text-sm mb-3">{bookingError}</p>
+                <p className="text-red-500 dark:text-red-400 text-sm mb-3">{bookingError}</p>
               )}
 
               <button

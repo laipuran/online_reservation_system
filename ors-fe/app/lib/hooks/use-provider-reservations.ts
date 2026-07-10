@@ -26,6 +26,7 @@ export function useProviderReservations(
         const svc = serviceMap.get(item.service_id);
         return {
           id: item.id,
+          user_id: item.user_id,
           service: {
             id: svc?.id ?? item.service_id,
             title: svc?.title ?? "未知服务",
