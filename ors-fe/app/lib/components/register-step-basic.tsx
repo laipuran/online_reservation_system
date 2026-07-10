@@ -44,6 +44,7 @@ export default function RegisterStepBasic({
 
   return (
     <div className="space-y-4" onKeyDown={handleKeyDown}>
+      {error && <p className="text-red-500 dark:text-red-400 text-sm">{error}</p>}
       <div>
         <label className="block text-sm font-medium mb-1 dark:text-gray-300">昵称</label>
         <input
